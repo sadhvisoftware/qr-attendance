@@ -104,8 +104,11 @@ app.post("/mark-attendance",(req,res)=>{
 
 const {employee_id,type} = req.body;
 
-const today=new Date().toISOString().split("T")[0];
-const currentTime=new Date().toTimeString().split(" ")[0];
+const now = new Date();
+const ist = new Date(now.toLocaleString("en-US",{timeZone:"Asia/Kolkata"}));
+
+const today = ist.toISOString().split("T")[0];
+const currentTime = ist.toTimeString().split(" ")[0];
 
 db.query(
 "SELECT * FROM attendance WHERE employee_id=? AND DATE=?",
