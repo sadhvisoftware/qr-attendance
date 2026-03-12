@@ -77,23 +77,25 @@ const lunchEnd = "15:00:00";
 
 app.post("/login",(req,res)=>{
 
-const {email,password} = req.body;
+const {email,password}=req.body;
 
-db.query(
-"SELECT * FROM employees WHERE email=? AND password=?",
-[email,password],
-(err,results)=>{
+const sql="SELECT * FROM employees WHERE email=? AND password=?";
 
-if(err) return res.status(500).send("DB Error");
+db.query(sql,[email,password],(err,result)=>{
 
-if(results.length===0){
-return res.status(401).send("Invalid");
+if(err) return res.status(500).send("DB error");
+
+if(result.length===0){
+return res.json({});
 }
 
+const user=result[0];
+
 res.json({
-employee_id:results[0].id,
-name:results[0].NAME,
-department:results[0].department
+employee_id:user.id,
+name:user.name,
+department:user.department,
+role:user.role
 });
 
 });

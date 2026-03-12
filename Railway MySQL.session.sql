@@ -1,2 +1,2 @@
-ALTER TABLE holidays
-MODIFY COLUMN id INT NOT NULL AUTO_INCREMENT;
+INSERT INTO employees (name,department,email,password,role)
+VALUES ('Admin','Admin','admin@sadhvi.com','1234561','admin');

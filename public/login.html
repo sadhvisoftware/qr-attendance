@@ -61,22 +61,26 @@ function login() {
   .then(res => res.json())
   .then(data => {
 
-    if (data.employee_id) {
+if(data.employee_id){
 
-      localStorage.setItem("employee_id", data.employee_id);
-      localStorage.setItem("employee_name", data.name);
-      localStorage.setItem("employee_department", data.department);
+localStorage.setItem("employee_id", data.employee_id);
+localStorage.setItem("employee_name", data.name);
+localStorage.setItem("employee_department", data.department);
+localStorage.setItem("role", data.role);
 
-      window.location.href = "scan.html";
+if(data.role === "admin"){
+window.location.href="admin.html";
+}else{
+window.location.href="scan.html";
+}
 
-    } else {
+}
+else{
+errorBox.innerText="Invalid email or password";
+errorBox.classList.remove("d-none");
+}
 
-      errorBox.innerText = "Invalid email or password ❌";
-      errorBox.classList.remove("d-none");
-
-    }
-
-  })
+})
   .catch(() => {
 
     errorBox.innerText = "Server error. Please try again.";

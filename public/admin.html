@@ -214,6 +214,13 @@ background:#f1f5ff;
 
 <script>
 
+    const role = localStorage.getItem("role");
+
+if(role !== "admin"){
+alert("Access denied");
+window.location.href="login.html";
+}
+
     function toggleHolidayForm(){
         
         const form=document.getElementById("holidayForm");
