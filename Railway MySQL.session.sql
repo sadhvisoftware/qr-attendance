@@ -1,0 +1,8 @@
+CREATE TABLE employees (
+id INT AUTO_INCREMENT PRIMARY KEY,
+NAME VARCHAR(100),
+department VARCHAR(100),
+email VARCHAR(100),
+password VARCHAR(255),
+role VARCHAR(20)
+);
