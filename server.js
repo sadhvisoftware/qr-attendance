@@ -9,7 +9,9 @@ app.use(express.json());
 app.use(cors());
 app.use(express.static(path.join(__dirname,"public")));
 
-app.listen(5000,"0.0.0.0",()=>{
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT,"0.0.0.0",()=>{
 console.log("Server running 🚀");
 });
 
