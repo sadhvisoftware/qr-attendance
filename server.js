@@ -160,7 +160,13 @@ permissionType,
 permissionTime,
 status
 ],
-()=>res.send("IN Time Marked")
+(err)=>{
+if(err){
+console.log(err);
+return res.status(500).send("DB Error");
+}
+res.send("IN Time Marked");
+}
 );
 
 return;
