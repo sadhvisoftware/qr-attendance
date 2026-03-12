@@ -413,6 +413,11 @@ password
 
 alert(msg);
 
+document.getElementById("empName").value="";
+document.getElementById("empDepartment").value="";
+document.getElementById("empEmail").value="";
+document.getElementById("empPass").value="";
+
 loadAttendance();
 loadStats();
 
@@ -476,6 +481,8 @@ function updateEmployee(){
 const id=document.getElementById("editId").value;
 const name=document.getElementById("editName").value;
 const department=document.getElementById("editDepartment").value;
+const email=document.getElementById("empEmail").value;
+const password=document.getElementById("empPass").value;
 
 fetch("/admin/update-employee",{
 method:"POST",
@@ -483,7 +490,10 @@ headers:{"Content-Type":"application/json"},
 body:JSON.stringify({
 id,
 name,
-department
+email,
+department,
+password
+
 })
 })
 .then(res=>res.text())
