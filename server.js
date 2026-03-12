@@ -570,7 +570,10 @@ db.query(
 [name,department,email,password,"employee"],
 (err)=>{
 
-if(err) return res.status(500).send("DB Error");
+if(err){
+console.log(err);
+return res.status(500).send("DB Error");
+}
 
 res.send("Employee Added");
 
