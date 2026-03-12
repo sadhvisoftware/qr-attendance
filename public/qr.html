@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>Office Attendance QR</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+body{
+background:#eef2f7;
+font-family:Segoe UI;
+}
+
+.header{
+text-align:center;
+font-weight:600;
+margin-bottom:20px;
+}
+
+.dashboard{
+display:grid;
+grid-template-columns: 1fr 1.5fr;
+gap:25px;
+}
+
+.card-ui{
+background:white;
+padding:25px;
+border-radius:12px;
+box-shadow:0 6px 20px rgba(0,0,0,0.08);
+}
+
+#clock{
+font-size:18px;
+color:#666;
+}
+
+.qr-box{
+display:flex;
+justify-content:center;
+align-items:center;
+margin-top:15px;
+}
+
+.qr-box canvas{
+width:230px !important;
+height:230px !important;
+}
+
+.table{
+font-size:14px;
+}
+
+.badge{
+font-size:12px;
+padding:6px 10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container-fluid p-4">
+
+<h3 class="header">📷 Office Attendance QR System</h3>
+
+<div class="dashboard">
+
+<!-- QR PANEL -->
+
+<div class="card-ui text-center">
+
+<div id="clock"></div>
+
+<div class="qr-box">
+<div id="qrcode"></div>
+</div>
+
+<div id="generatedTime" class="text-muted mt-3"></div>
+
+<button class="btn btn-primary mt-3" onclick="downloadQR()">
+⬇ Download QR
+</button>
+
+</div>
+
+<!-- RIGHT PANEL -->
+
+<div>
+
+<!-- EMPLOYEE STATUS -->
+
+<div class="card-ui mb-4">
+
+<h5 class="mb-3">👨‍💻 Employee Live Status</h5>
+
+<div class="table-responsive">
+
+<table class="table table-hover">
+
+<thead class="table-dark">
+
+<tr>
+
+<th>ID</th>
+<th>Name</th>
+<th>Department</th>
+<th>Date</th>
+<th>Time</th>
+<th>Lunch Start</th>
+<th>Lunch End</th>
+<th>Status</th>
+</tr>
+
+</thead>
+
+<tbody id="statusTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<!-- UPCOMING HOLIDAYS -->
+
+<div class="card-ui">
+
+<h5 class="mb-3">📅 Upcoming Holidays</h5>
+
+<div class="table-responsive">
+
+<table class="table table-hover">
+
+<thead class="table-dark">
+
+<tr>
+<th>Date</th>
+<th>Reason</th>
+</tr>
+
+</thead>
+
+<tbody id="holidayTable"></tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let qr;
+
+/* CLOCK */
+
+function updateClock(){
+
+const now=new Date();
+
+document.getElementById("clock").innerText=
+"Office Time : "+now.toLocaleTimeString();
+
+}
+
+setInterval(updateClock,1000);
+updateClock();
+
+
+/* FIXED QR */
+
+function generateQR(){
+
+const qrData="OFFICE_ATTENDANCE_FIXED";
+
+document.getElementById("qrcode").innerHTML="";
+
+qr=new QRCode(document.getElementById("qrcode"),{
+text:qrData,
+width:230,
+height:230
+});
+
+document.getElementById("generatedTime").innerText=
+"Fixed QR Generated";
+
+}
+
+
+/* DOWNLOAD QR */
+
+function downloadQR(){
+
+const canvas=document.querySelector("#qrcode canvas");
+
+if(!canvas){
+alert("QR not generated");
+return;
+}
+
+const poster=document.createElement("canvas");
+const ctx=poster.getContext("2d");
+
+poster.width=500;
+poster.height=650;
+
+/* background */
+
+ctx.fillStyle="#ffffff";
+ctx.fillRect(0,0,poster.width,poster.height);
+
+/* title */
+
+ctx.fillStyle="#000";
+ctx.font="bold 28px Segoe UI";
+ctx.textAlign="center";
+ctx.fillText("OFFICE ATTENDANCE",250,60);
+
+/* subtitle */
+
+ctx.font="18px Segoe UI";
+ctx.fillStyle="#555";
+ctx.fillText("Scan QR to Mark Attendance",250,100);
+
+/* border box */
+
+ctx.strokeStyle="#000";
+ctx.lineWidth=2;
+ctx.strokeRect(120,140,260,260);
+
+/* draw QR */
+
+ctx.drawImage(canvas,135,155,230,230);
+
+/* footer */
+
+ctx.font="bold 16px Segoe UI";
+ctx.fillStyle="#333";
+ctx.fillText("Sadhvi Attendance System",250,430);
+
+ctx.font="15px Segoe UI";
+ctx.fillStyle="#666";
+
+ctx.fillText("1. Open Attendance App",250,470);
+
+ctx.fillText("2. Enable Location & Camera Services",250,500);
+
+ctx.fillText("3. Scan QR To Mark Attendance",250,530);
+
+/* download */
+
+const link=document.createElement("a");
+link.download="office_attendance_qr.png";
+link.href=poster.toDataURL();
+link.click();
+
+}
+
+
+/* EMPLOYEE STATUS */
+
+function loadEmployeeStatus(){
+
+fetch("/admin/live-status")
+
+.then(res=>res.json())
+
+.then(data=>{
+
+const tbody=document.getElementById("statusTable");
+
+tbody.innerHTML="";
+
+data.forEach(emp=>{
+
+let badge="secondary";
+
+if(emp.status==="IN") badge="success";
+if(emp.status==="Lunch Break") badge="warning";
+if(emp.status==="Working") badge="primary";
+if(emp.status==="OUT") badge="dark";
+if(emp.status==="Absent") badge="danger";
+
+const tr=`
+<tr>
+<td>${emp.id}</td>
+<td>${emp.name}</td>
+<td>${emp.department || "-"}</td>
+<td>${new Date().toLocaleDateString()}</td>
+<td>${emp.time || "-"}</td>
+<td>${emp.lunch_start || "-"}</td>
+<td>${emp.lunch_end || "-"}</td>
+<td><span class="badge bg-${badge}">${emp.status}</span></td>
+</tr>
+`;
+
+tbody.insertAdjacentHTML("beforeend",tr);
+
+});
+
+});
+
+}
+
+
+/* HOLIDAYS */
+
+function loadHolidays(){
+
+fetch("/admin/upcoming-holidays")
+
+.then(res=>res.json())
+
+.then(data=>{
+
+const tbody=document.getElementById("holidayTable");
+
+tbody.innerHTML="";
+
+data.forEach(h=>{
+
+const tr=`
+<tr>
+<td>${new Date(h.holiday_date).toLocaleDateString()}</td>
+<td>${h.reason}</td>
+</tr>
+`;
+
+tbody.insertAdjacentHTML("beforeend",tr);
+
+});
+
+});
+
+}
+
+
+/* INITIAL LOAD */
+
+generateQR();
+
+loadEmployeeStatus();
+
+loadHolidays();
+
+setInterval(loadEmployeeStatus,2000);
+
+</script>
+
+</body>
+</html>
