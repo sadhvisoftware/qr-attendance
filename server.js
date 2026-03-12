@@ -93,7 +93,7 @@ const user=result[0];
 
 res.json({
 employee_id:user.id,
-name:user.name,
+name:user.Name,
 department:user.department,
 role:user.role
 });
