@@ -79,18 +79,26 @@ app.post("/login",(req,res)=>{
 
 const {email,password}=req.body;
 
-const sql="SELECT * FROM employees WHERE email=? AND password=?";
+/* 1️⃣ Check email first */
+const sql="SELECT * FROM employees WHERE email=?";
 
-db.query(sql,[email,password],(err,result)=>{
+db.query(sql,[email],(err,result)=>{
 
 if(err) return res.status(500).send("DB error");
 
+/* ❌ Email not found */
 if(result.length===0){
-return res.json({});
+return res.json({error:"Email not registered"});
 }
 
 const user=result[0];
 
+/* ❌ Password wrong */
+if(user.password !== password){
+return res.json({error:"Incorrect password"});
+}
+
+/* ✅ Success */
 res.json({
 employee_id:user.id,
 name:user.NAME,
