@@ -94,7 +94,7 @@ background:#f1f5ff;
 
 <div class="row g-3 align-items-end">
 
-<div class="col-md-2">
+<div class="col-md-3">
 <label>Date</label>
 <input type="date" id="datePicker" class="form-control">
 </div>
@@ -104,26 +104,17 @@ background:#f1f5ff;
 </div>
 
 <div class="col-md-3">
-<input type="text" id="searchInput" class="form-control" placeholder="🔍 Search employee...">
-</div>
-
-<div class="col-md-2">
-<select id="statusFilter" class="form-control">
-<option value="">All</option>
-<option value="Present">Present</option>
-<option value="Absent">Absent</option>
-<option value="Late">Late</option>
-<option value="Completed">Completed</option>
-</select>
+<label>Report From</label>
+<input type="date" id="startDate" class="form-control">
 </div>
 
 <div class="col-md-3">
-<label>Report</label>
-<div class="d-flex">
-<input type="date" id="startDate" class="form-control">
+<label>Report To</label>
 <input type="date" id="endDate" class="form-control">
-<button class="btn btn-dark ms-2" onclick="downloadReport()">⬇</button>
 </div>
+
+<div class="col-md-1">
+<button class="btn btn-dark w-100" onclick="downloadReport()">⬇</button>
 </div>
 
 </div>
@@ -136,16 +127,22 @@ background:#f1f5ff;
 
 <div class="col-md-6">
 
-<button class="btn btn-primary mb-3" onclick="toggleEmployeeForm()">+ Add Employee</button>
-
+    <button class="btn btn-primary mb-3" onclick="toggleEmployeeForm()">
++ Add Employee
+</button>
 <div class="card p-3 mb-4" id="employeeForm" style="display:none;">
 
+<h5>Add Employee</h5>
+
 <input type="text" id="empName" class="form-control mb-2" placeholder="Name">
+
 <input type="text" id="empDepartment" class="form-control mb-2" placeholder="Department">
+
 <input type="email" id="empEmail" class="form-control mb-2" placeholder="Email">
+
 <input type="password" id="empPass" class="form-control mb-3" placeholder="Password">
 
-<button class="btn btn-success w-100" onclick="addEmployee()">Add</button>
+<button class="btn btn-success w-100" onclick="addEmployee()">Add Employee</button>
 
 </div>
 
@@ -153,14 +150,18 @@ background:#f1f5ff;
 
 <div class="col-md-6">
 
-<button class="btn btn-primary mb-3" onclick="toggleHolidayForm()">+ Add Holiday</button>
-
+ <button class="btn btn-primary mb-3" onclick="toggleHolidayForm()">
++ Add Holiday
+</button>
 <div class="card p-3 mb-4" id="holidayForm" style="display:none;">
 
+<h5>Add Holiday</h5>
+
 <input type="date" id="holidayDate" class="form-control mb-2">
+
 <input type="text" id="holidayReason" class="form-control mb-3" placeholder="Reason">
 
-<button class="btn btn-warning w-100" onclick="addHoliday()">Add</button>
+<button class="btn btn-warning w-100" onclick="addHoliday()">Add Holiday</button>
 
 </div>
 
@@ -168,29 +169,37 @@ background:#f1f5ff;
 
 </div>
 
-<!-- TABLE -->
+<!-- ATTENDANCE TABLE -->
 
 <div class="card p-3">
 
-<h5>Employee Attendance</h5>
+<h5 class="mb-3">Employee Attendance</h5>
 
 <div class="table-responsive">
 
-<table class="table table-bordered">
+<table class="table table-bordered align-middle">
 
 <thead class="table-dark">
+
 <tr>
+
 <th>ID</th>
 <th>Name</th>
-<th>Dept</th>
+<th>Department</th>
 <th>Date</th>
-<th>IN</th>
-<th>Lunch Out</th>
-<th>Lunch In</th>
-<th>OUT</th>
+<th>IN Time</th>
+<th>Lunch Start</th>
+<th>Lunch End</th>
+<th>OUT Time</th>
+<th>Permission</th>
+<th>Permission Time</th>
+<th>Total Hours</th>
+<th>Working Hours</th>
 <th>Status</th>
 <th>Action</th>
+
 </tr>
+
 </thead>
 
 <tbody id="attendanceBody"></tbody>
@@ -205,101 +214,193 @@ background:#f1f5ff;
 
 <script>
 
-if(localStorage.getItem("role")!=="admin"){
+    const role = localStorage.getItem("role");
+
+if(role !== "admin"){
 alert("Access denied");
 window.location.href="login.html";
 }
 
-/* SEARCH */
-document.getElementById("searchInput").addEventListener("keyup", function(){
-const value=this.value.toLowerCase();
-document.querySelectorAll("#attendanceBody tr").forEach(row=>{
-row.style.display=row.innerText.toLowerCase().includes(value)?"":"none";
-});
-});
+    function toggleHolidayForm(){
+        
+        const form=document.getElementById("holidayForm");
 
-/* AUTO REFRESH */
-setInterval(()=>{
-loadAttendance();
-loadStats();
-},30000);
+        if(form.style.display==="none"){
+            form.style.display="block";
+        }else{
+            form.style.display="none";
+        }
+    }
+
+
+    function toggleEmployeeForm(){
+
+const form=document.getElementById("employeeForm");
+
+if(form.style.display==="none"){
+form.style.display="block";
+}else{
+form.style.display="none";
+}
+
+}
 
 function logout(){
 localStorage.clear();
 window.location.href="login.html";
 }
 
+function formatTime(time){
+
+if(!time) return "-";
+
+const [h,m]=time.split(":");
+
+let hour=parseInt(h);
+
+let ampm=hour>=12?"PM":"AM";
+
+hour=hour%12;
+hour=hour?hour:12;
+
+return `${hour}:${m} ${ampm}`;
+
+}
+
 function loadStats(){
+
 fetch("/admin/stats")
 .then(res=>res.json())
-.then(d=>{
-totalEmployees.innerText=d.total;
-presentEmployees.innerText=d.present;
-absentEmployees.innerText=d.absent;
+.then(data=>{
+
+document.getElementById("totalEmployees").innerText=data.total;
+document.getElementById("presentEmployees").innerText=data.present;
+document.getElementById("absentEmployees").innerText=data.absent;
+
 });
+
 }
 
 function loadAttendance(){
 
 let date=document.getElementById("datePicker").value;
-if(!date) date=new Date().toISOString().split("T")[0];
+
+if(!date){
+date=new Date().toISOString().split("T")[0];
+}
 
 fetch("/admin/attendance?date="+date)
+
 .then(res=>res.json())
+
 .then(data=>{
 
 const tbody=document.getElementById("attendanceBody");
+
 tbody.innerHTML="";
 
 data.forEach(row=>{
 
 let status="Absent";
-let badge="bg-danger";
+let badge="badge bg-danger";
 
-/* Late */
-if(row.in_time && row.in_time > "10:30:00"){
-status="Late";
-badge="bg-danger";
+/* Holiday */
+
+if(row.holiday_reason){
+status="Holiday";
+badge="badge bg-warning";
 }
+
+/* WFH */
+
+else if(row.attendance_status==="WFH"){
+status="WFH";
+badge="badge bg-primary";
+}
+
+/* Working */
+
+else if(row.in_time && !row.out_time){
+status="Working";
+badge="badge bg-info";
+}
+
+/* Completed */
+
 else if(row.out_time){
 status="Completed";
-badge="bg-success";
-}
-else if(row.in_time){
-status="Working";
-badge="bg-info";
+badge="badge bg-success";
 }
 
 const tr=`
+
 <tr>
+
 <td>${row.employee_id}</td>
+
 <td>${row.name}</td>
-<td>${row.department||"-"}</td>
-<td>${row.DATE?new Date(row.DATE).toLocaleDateString():"-"}</td>
-<td>${row.in_time||"-"}</td>
-<td>${row.lunch_out||"-"}</td>
-<td>${row.lunch_in||"-"}</td>
-<td>${row.out_time||"-"}</td>
-<td><span class="badge ${badge}">${status}</span></td>
+
+<td>${row.department || "-"}</td>
+
+<td>${row.DATE ? new Date(row.DATE).toLocaleDateString() : "-"}</td>
+
+<td>${formatTime(row.in_time)}</td>
+
+<td>${formatTime(row.lunch_out)}</td>
+
+<td>${formatTime(row.lunch_in)}</td>
+
+<td>${formatTime(row.out_time)}</td>
+
+<td>${row.permission_type || "-"}</td>
+
+<td>${row.permission_time || "-"}</td>
+
+<td>${row.total_hours || "-"}</td>
+
+<td>${row.working_hours || "-"}</td>
+
+<td><span class="${badge}">${status}</span></td>
+
 <td>
-<button class="btn btn-sm btn-primary" onclick="openEditEmployee(${row.employee_id},'${row.name}','${row.department}')">Edit</button>
-<button class="btn btn-sm btn-danger" onclick="deleteEmployee(${row.employee_id})">Delete</button>
+
+<button class="btn btn-sm btn-primary"
+onclick="openEditEmployee(${row.employee_id}, \`${row.name}\`, \`${row.department}\`)">
+Employee
+</button>
+
+<button class="btn btn-sm btn-warning"
+onclick="openEditAttendance(${row.employee_id},'${row.DATE}','${row.in_time}','${row.lunch_out}','${row.lunch_in}','${row.out_time}','${row.permission_type}','${row.permission_time}')">
+Attendance
+</button>
+
+<button class="btn btn-sm btn-danger"
+onclick="deleteEmployee(${row.employee_id})">
+Delete
+</button>
+
 </td>
-</tr>`;
+
+</tr>
+
+`;
+
 tbody.insertAdjacentHTML("beforeend",tr);
+
 });
 
 });
+
 }
 
 function addEmployee(){
 
-const name=empName.value;
-const department=empDepartment.value;
-const email=empEmail.value;
-const password=empPass.value;
+const name=document.getElementById("empName").value;
+const department=document.getElementById("empDepartment").value;
+const email=document.getElementById("empEmail").value;
+const password=document.getElementById("empPass").value;
 
-if(!name||!department||!email||!password){
+if(!name || !department || !email || !password){
 alert("Fill all fields");
 return;
 }
@@ -307,19 +408,33 @@ return;
 fetch("/admin/add-employee",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({name,department,email,password})
+body:JSON.stringify({
+name,
+department,
+email,
+password
+})
 })
 .then(res=>res.text())
 .then(msg=>{
+
 alert(msg);
+
+document.getElementById("empName").value="";
+document.getElementById("empDepartment").value="";
+document.getElementById("empEmail").value="";
+document.getElementById("empPass").value="";
+
 loadAttendance();
 loadStats();
+
 });
 
 }
 
 function deleteEmployee(id){
-if(!confirm("Delete?")) return;
+
+if(!confirm("Delete this employee?")) return;
 
 fetch("/admin/delete-employee",{
 method:"POST",
@@ -328,13 +443,15 @@ body:JSON.stringify({id})
 })
 .then(res=>res.text())
 .then(msg=>{
+
 alert(msg);
+
 loadAttendance();
 loadStats();
-});
-}
 
-/* EDIT EMPLOYEE FIX */
+});
+
+}
 
 function openEditEmployee(id,name,department){
 
@@ -342,23 +459,93 @@ document.getElementById("editId").value=id;
 document.getElementById("editName").value=name;
 document.getElementById("editDepartment").value=department;
 
-new bootstrap.Modal(document.getElementById("editModal")).show();
+const modal=new bootstrap.Modal(document.getElementById("editModal"));
+modal.show();
+
+}
+
+function openEditAttendance(id,date,inTime,lunchOut,lunchIn,outTime,ptype,ptime){
+
+document.getElementById("attEmployeeId").value=id;
+document.getElementById("attDate").value =
+date ? new Date(date).toISOString().split("T")[0] : "";
+
+document.getElementById("attIn").value=inTime || "";
+document.getElementById("attLunchOut").value=lunchOut || "";
+document.getElementById("attLunchIn").value=lunchIn || "";
+document.getElementById("attOut").value=outTime || "";
+
+document.getElementById("attPermissionType").value=ptype || "";
+document.getElementById("attPermissionTime").value=ptime || "";
+
+const modal=new bootstrap.Modal(document.getElementById("editAttendanceModal"));
+modal.show();
+
 }
 
 function updateEmployee(){
 
-if(!confirm("Update employee?")) return;
-
-const id=editId.value;
-const name=editName.value;
-const department=editDepartment.value;
-const email=editEmail.value;
-const password=editPassword.value;
+const id=document.getElementById("editId").value;
+const name=document.getElementById("editName").value;
+const department=document.getElementById("editDepartment").value;
+const email=document.getElementById("empEmail").value;
+const password=document.getElementById("empPass").value;
 
 fetch("/admin/update-employee",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({id,name,department,email,password})
+body:JSON.stringify({
+id,
+name,
+email,
+department,
+password
+
+})
+})
+.then(res=>res.text())
+.then(msg=>{
+alert(msg);
+location.reload();
+});
+
+}
+
+function updateAttendance(){
+
+const employee_id=document.getElementById("attEmployeeId").value;
+const date=document.getElementById("attDate").value;
+
+const in_time=document.getElementById("attIn").value;
+const lunch_out=document.getElementById("attLunchOut").value;
+const lunch_in=document.getElementById("attLunchIn").value;
+const out_time=document.getElementById("attOut").value;
+
+const permission_type=document.getElementById("attPermissionType").value;
+const permission_time=document.getElementById("attPermissionTime").value;
+
+const attendance_status=document.getElementById("attStatus").value;
+
+fetch("/admin/update-attendance",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+employee_id,
+date,
+in_time,
+lunch_out,
+lunch_in,
+out_time,
+permission_type,
+permission_time,
+attendance_status
+})
+
 })
 .then(res=>res.text())
 .then(msg=>{
@@ -370,31 +557,39 @@ location.reload();
 
 function addHoliday(){
 
+const date=document.getElementById("holidayDate").value;
+const reason=document.getElementById("holidayReason").value;
+
 fetch("/admin/add-holiday",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-date:holidayDate.value,
-reason:holidayReason.value
-})
+body:JSON.stringify({date,reason})
 })
 .then(res=>res.text())
-.then(msg=>alert(msg));
+.then(msg=>{
+alert(msg);
+});
 
 }
 
 function downloadReport(){
-window.open(`/admin/report?start=${startDate.value}&end=${endDate.value}`);
+
+const start=document.getElementById("startDate").value;
+const end=document.getElementById("endDate").value;
+
+window.open(`/admin/report?start=${start}&end=${end}`);
+
 }
 
-datePicker.value=new Date().toISOString().split("T")[0];
+document.getElementById("datePicker").value=
+new Date().toISOString().split("T")[0];
 
 loadAttendance();
 loadStats();
 
 </script>
 
-<!-- EDIT MODAL -->
+<!-- EDIT EMPLOYEE -->
 
 <div class="modal fade" id="editModal">
 <div class="modal-dialog">
@@ -408,15 +603,79 @@ loadStats();
 <div class="modal-body">
 
 <input type="hidden" id="editId">
+
 <input type="text" id="editName" class="form-control mb-2">
-<input type="text" id="editDepartment" class="form-control mb-2">
-<input type="email" id="editEmail" class="form-control mb-2" placeholder="Email">
-<input type="password" id="editPassword" class="form-control" placeholder="Password">
+
+<input type="text" id="editDepartment" class="form-control">
 
 </div>
 
 <div class="modal-footer">
+
 <button class="btn btn-success" onclick="updateEmployee()">Update</button>
+
+</div>
+
+</div>
+</div>
+</div>
+
+<!-- EDIT ATTENDANCE -->
+
+<div class="modal fade" id="editAttendanceModal">
+<div class="modal-dialog">
+<div class="modal-content">
+
+<div class="modal-header">
+<h5>Edit Attendance</h5>
+<button class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+
+<div class="modal-body">
+
+<input type="hidden" id="attEmployeeId">
+
+<label>Date</label>
+<input type="date" id="attDate" class="form-control mb-2">
+
+<label>IN Time</label>
+<input type="time" id="attIn" class="form-control mb-2">
+
+<label>Lunch Start</label>
+<input type="time" id="attLunchOut" class="form-control mb-2">
+
+<label>Lunch End</label>
+<input type="time" id="attLunchIn" class="form-control mb-2">
+
+<label>OUT Time</label>
+<input type="time" id="attOut" class="form-control mb-2">
+
+<label>Permission</label>
+<select id="attPermissionType" class="form-control mb-2">
+<option value="">None</option>
+<option value="Permission">Permission</option>
+</select>
+
+<label>Permission Time</label>
+<input type="text" id="attPermissionTime" class="form-control mb-2">
+
+<label>Status</label>
+<select id="attStatus" class="form-control mb-2">
+<option value="">Select</option>
+<option value="Completed">Completed</option>
+<option value="Half Day">Half Day</option>
+<option value="WFH">WFH</option>
+<option value="Leave">Leave</option>
+</select>
+
+</div>
+
+
+
+<div class="modal-footer">
+
+<button class="btn btn-success" onclick="updateAttendance()">Update</button>
+
 </div>
 
 </div>
