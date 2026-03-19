@@ -291,10 +291,10 @@ function updateLastStatus(msg) {
     status.innerHTML = "<span class='text-success'>IN TIME</span>";
   }
   else if (msg.includes("Lunch Start")) {
-    status.innerHTML = "<span class='text-warning'>LUNCH OUT</span>";
+    status.innerHTML = "<span class='text-warning'>LUNCH START</span>";
   }
   else if (msg.includes("Lunch End")) {
-    status.innerHTML = "<span class='text-primary'>LUNCH IN</span>";
+    status.innerHTML = "<span class='text-primary'>LUNCH END</span>";
   }
   else if (msg.includes("Permission")) {
     status.innerHTML = "<span class='text-secondary'>AFTERNOON PERMISSION</span>";
