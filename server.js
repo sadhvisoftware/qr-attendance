@@ -571,12 +571,12 @@ app.get("/employee/status", (req, res) => {
       }
       else if (r.lunch_in) {
         status = "WORKING";
-        last_scan_type = "LUNCH IN";
+        last_scan_type = "LUNCH START";
         last_scan_time = r.lunch_in;
       }
       else if (r.lunch_out) {
         status = "LUNCH BREAK";
-        last_scan_type = "LUNCH OUT";
+        last_scan_type = "LUNCH END";
         last_scan_time = r.lunch_out;
       }
       else if (r.in_time) {
