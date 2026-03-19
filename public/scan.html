@@ -87,11 +87,9 @@ padding:12px;
 </div>
 
 <div class="card-ui text-center">
-
-<h6 class="text-muted">Last Scan Status</h6>
-
-<div id="lastStatus" class="status-text">Loading...</div>
-
+  <h6 class="text-muted">Last Scan Details</h6>
+  <div id="lastStatus" class="status-text">Loading...</div>
+  <div id="lastScanTime" class="text-muted mt-2"></div>
 </div>
 
 <div class="card-ui">
@@ -279,32 +277,53 @@ scannerStarted=true;
 
 }
 
-function updateLastStatus(msg){
+function updateLastStatus(msg) {
+  const status = document.getElementById("lastStatus");
+  const timeBox = document.getElementById("lastScanTime");
 
-const status=document.getElementById("lastStatus");
+  const now = new Date().toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 
-if(msg.includes("IN"))
-status.innerHTML="<span class='text-success'>IN TIME</span>";
+  if (msg.includes("IN")) {
+    status.innerHTML = "<span class='text-success'>IN TIME</span>";
+  }
+  else if (msg.includes("Lunch Start")) {
+    status.innerHTML = "<span class='text-warning'>LUNCH OUT</span>";
+  }
+  else if (msg.includes("Lunch End")) {
+    status.innerHTML = "<span class='text-primary'>LUNCH IN</span>";
+  }
+  else if (msg.includes("Permission")) {
+    status.innerHTML = "<span class='text-secondary'>AFTERNOON PERMISSION</span>";
+  }
+  else if (msg.includes("OUT")) {
+    status.innerHTML = "<span class='text-danger'>OUT TIME</span>";
+  }
+  else {
+    status.innerText = msg;
+  }
 
-else if(msg.includes("Lunch Out"))
-status.innerHTML="<span class='text-warning'>LUNCH OUT</span>";
-
-else if(msg.includes("Lunch In"))
-status.innerHTML="<span class='text-primary'>LUNCH IN</span>";
-
-else if(msg.includes("OUT"))
-status.innerHTML="<span class='text-danger'>OUT TIME</span>";
-
+  timeBox.innerText = "Last Scan Time: " + now;
 }
 
-function loadStatus(){
+function loadStatus() {
+  fetch("/employee/status?employee_id=" + employeeId)
+    .then(res => res.json())
+    .then(data => {
+      const lastStatus = document.getElementById("lastStatus");
+      const lastScanTime = document.getElementById("lastScanTime");
 
-fetch("/employee/status?employee_id="+employeeId)
-.then(res=>res.json())
-.then(data=>{
-document.getElementById("lastStatus").innerText=data.status;
-});
+      lastStatus.innerText = data.last_scan_type || data.status || "NOT MARKED";
 
+      if (data.last_scan_time) {
+        lastScanTime.innerText = "Last Scan Time: " + data.last_scan_time;
+      } else {
+        lastScanTime.innerText = "Last Scan Time: -";
+      }
+    });
 }
 
 loadStatus();

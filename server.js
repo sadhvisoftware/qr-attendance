@@ -532,42 +532,64 @@ res.json(data);
 
 /* ---------------- EMPLOYEE STATUS ---------------- */
 
-app.get("/employee/status",(req,res)=>{
+app.get("/employee/status", (req, res) => {
+  const employee_id = req.query.employee_id;
+  const today = new Date().toISOString().split("T")[0];
 
-const employee_id=req.query.employee_id;
-const today=new Date().toISOString().split("T")[0];
+  db.query(
+    "SELECT * FROM attendance WHERE employee_id=? AND DATE=?",
+    [employee_id, today],
+    (err, results) => {
+      if (err) return res.status(500).send("DB Error");
 
-db.query(
-"SELECT * FROM attendance WHERE employee_id=? AND DATE=?",
-[employee_id,today],
-(err,results)=>{
+      if (results.length === 0) {
+        return res.json({
+          status: "NOT MARKED",
+          last_scan_type: null,
+          last_scan_time: null
+        });
+      }
 
-if(err) return res.status(500).send("DB Error");
+      const r = results[0];
 
-if(results.length===0){
-return res.json({status:"NOT MARKED"});
-}
+      let status = "NOT MARKED";
+      let last_scan_type = null;
+      let last_scan_time = null;
 
-const r = results[0];
+      if (r.out_time) {
+        status = "OUT";
+        last_scan_type = "OUT TIME";
+        last_scan_time = r.out_time;
+      }
+      else if (r.lunch_in) {
+        status = "WORKING";
+        last_scan_type = "LUNCH IN";
+        last_scan_time = r.lunch_in;
+      }
+      else if (r.lunch_out) {
+        status = "LUNCH BREAK";
+        last_scan_type = "LUNCH OUT";
+        last_scan_time = r.lunch_out;
+      }
+      else if (r.in_time) {
+        status = "IN";
+        last_scan_type = "IN TIME";
+        last_scan_time = r.in_time;
+      }
 
+      if (r.permission_type === "Permission" && r.out_time) {
+        status = "PERMISSION";
+        last_scan_type = "AFTERNOON PERMISSION";
+        last_scan_time = r.out_time;
+      }
 
-/* PRIORITY ORDER */
-
-if(r.out_time)
-return res.json({status:"OUT"});
-
-if(r.lunch_out && !r.lunch_in)
-return res.json({status:"LUNCH BREAK"});
-
-if(r.lunch_in && !r.out_time)
-return res.json({status:"WORKING"});
-
-if(r.in_time)
-return res.json({status:"IN"});
-
-return res.json({status:"NOT MARKED"});
-
-});
+      res.json({
+        status,
+        last_scan_type,
+        last_scan_time
+      });
+    }
+  );
 });
 
 
