@@ -164,7 +164,7 @@ permissionType="Half Day";
 db.query(
 `INSERT INTO attendance
 (employee_id,DATE,in_time,permission_type,permission_time,attendance_status,mode)
-VALUES (?,?,?,?,?,?)`,
+VALUES (?,?,?,?,?,?,?)`,
 [
 employee_id,
 today,
@@ -374,6 +374,7 @@ a.working_hours,
 a.permission_type,
 a.permission_time,
 a.attendance_status,
+a.mode,
 h.reason as holiday_reason
 FROM employees e
 LEFT JOIN attendance a

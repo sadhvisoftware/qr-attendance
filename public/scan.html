@@ -235,7 +235,13 @@ function startScanner(){
 
 if(scannerStarted) return;
 
+// 👉 FIELD → no scanner needed
+if(workMode === "FIELD"){
 document.getElementById("actionPopup").style.display = "flex";
+return;
+}
+
+// 👉 OFFICE → start scanner
 document.getElementById("reader").style.display="block";
 
 const html5QrCode=new Html5Qrcode("reader");
@@ -257,8 +263,6 @@ backCamera.id,
 
 (decodedText)=>{
 
-if(workMode === "OFFICE"){
-
 if(!userLat || !userLng){
 alert("⚠ Enable GPS first");
 return;
@@ -271,10 +275,12 @@ alert("❌ Outside office location");
 return;
 }
 
-}
+// ✅ stop scanner after success
+html5QrCode.stop();
 
-// show popup
+// ✅ show popup AFTER scan
 document.getElementById("actionPopup").style.display="flex";
+
 }
 
 );
