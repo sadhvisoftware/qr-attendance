@@ -149,6 +149,13 @@ padding:12px;
 
 <script>
 
+  let workMode = "OFFICE";
+
+function setMode(mode){
+workMode = mode;
+document.getElementById("attendanceButtons").style.display = "block";
+}
+
 let userLat=null;
 let userLng=null;
 let scannerStarted=false;
@@ -228,6 +235,7 @@ function startScanner(){
 
 if(scannerStarted) return;
 
+document.getElementById("actionPopup").style.display = "flex";
 document.getElementById("reader").style.display="block";
 
 const html5QrCode=new Html5Qrcode("reader");
@@ -249,24 +257,24 @@ backCamera.id,
 
 (decodedText)=>{
 
-if(!userLat || !userLng){
+if(workMode === "OFFICE"){
 
+if(!userLat || !userLng){
 alert("⚠ Enable GPS first");
 return;
-
 }
 
 let distance=getDistance(userLat,userLng,officeLat,officeLng);
 
-if(distance>allowedRadius){
-
+if(distance > allowedRadius){
 alert("❌ Outside office location");
 return;
+}
 
 }
 
+// show popup
 document.getElementById("actionPopup").style.display="flex";
-
 }
 
 );
@@ -374,7 +382,8 @@ body:JSON.stringify({
 employee_id:employeeId,
 type:type,
 lat:userLat,
-lng:userLng
+lng:userLng,
+mode:workMode
 })
 })
 .then(res=>res.text())
@@ -415,11 +424,23 @@ z-index:9999;
 background:white;
 padding:25px;
 border-radius:10px;
-width:300px;
+width:320px;
 text-align:center;
 ">
 
-<h5 class="mb-3">Select Attendance</h5>
+<h5 class="mb-3">Select Work Mode</h5>
+
+<button class="btn btn-primary w-100 mb-2" onclick="setMode('OFFICE')">
+🏢 Office Work
+</button>
+
+<button class="btn btn-dark w-100 mb-3" onclick="setMode('FIELD')">
+🚗 Field Work
+</button>
+
+<div id="attendanceButtons" style="display:none;">
+
+<h6 class="mb-2">Select Attendance</h6>
 
 <button class="btn btn-success w-100 mb-2" onclick="sendAttendance('IN')">
 IN TIME
@@ -440,6 +461,8 @@ Afternoon Permission
 <button class="btn btn-danger w-100" onclick="sendAttendance('OUT')">
 OUT TIME
 </button>
+
+</div>
 
 </div>
 </div>

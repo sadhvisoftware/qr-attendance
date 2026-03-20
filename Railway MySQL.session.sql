@@ -1,2 +1,1 @@
-INSERT INTO employees (name,department,email,password,role)
-VALUES ('Admin','Admin','admin@sadhvi.com','1234561','admin');
+ALTER TABLE attendance ADD COLUMN mode VARCHAR(20) DEFAULT 'OFFICE';
