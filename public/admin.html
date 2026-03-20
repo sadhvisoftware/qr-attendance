@@ -195,7 +195,6 @@ background:#f1f5ff;
 <th>Permission Time</th>
 <th>Total Hours</th>
 <th>Working Hours</th>
-<th>Mode</th>
 <th>Status</th>
 <th>Action</th>
 
@@ -216,7 +215,6 @@ background:#f1f5ff;
 <script>
 
     const role = localStorage.getItem("role");
-    const mode = row.mode || "OFFICE";
 
 if(role !== "admin"){
 alert("Access denied");
@@ -361,12 +359,6 @@ const tr=`
 <td>${row.total_hours || "-"}</td>
 
 <td>${row.working_hours || "-"}</td>
-
-<td>
-${row.mode === "FIELD"
-? "<span class='badge bg-dark'>Field</span>"
-: "<span class='badge bg-primary'>Office</span>"}
-</td>
 
 <td><span class="${badge}">${status}</span></td>
 

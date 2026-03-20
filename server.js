@@ -112,7 +112,7 @@ role:user.role
 
 app.post("/mark-attendance",(req,res)=>{
 
-const {employee_id,type,mode} = req.body;
+const {employee_id,type} = req.body;
 
 const now = new Date();
 const ist = new Date(now.toLocaleString("en-US",{timeZone:"Asia/Kolkata"}));
@@ -163,16 +163,15 @@ permissionType="Half Day";
 
 db.query(
 `INSERT INTO attendance
-(employee_id,DATE,in_time,permission_type,permission_time,attendance_status,mode)
-VALUES (?,?,?,?,?,?,?)`,
+(employee_id,DATE,in_time,permission_type,permission_time,attendance_status)
+VALUES (?,?,?,?,?,?)`,
 [
 employee_id,
 today,
 currentTime,
 permissionType,
 permissionTime,
-status,
-mode || "OFFICE"
+status
 ],
 (err)=>{
 if(err){
@@ -374,7 +373,6 @@ a.working_hours,
 a.permission_type,
 a.permission_time,
 a.attendance_status,
-a.mode,
 h.reason as holiday_reason
 FROM employees e
 LEFT JOIN attendance a
