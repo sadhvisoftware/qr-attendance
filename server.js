@@ -641,273 +641,278 @@ const ExcelJS = require("exceljs");
 
 app.get("/admin/report", async (req, res) => {
 
-const {start, end} = req.query;
+  const { start, end } = req.query;
 
-const sql = `
-WITH RECURSIVE dates AS (
-SELECT DATE(?) AS date
-UNION ALL
-SELECT DATE_ADD(date, INTERVAL 1 DAY)
-FROM dates
-WHERE date < DATE(?)
-)
+  const sql = `
+  WITH RECURSIVE dates AS (
+    SELECT DATE(?) AS date
+    UNION ALL
+    SELECT DATE_ADD(date, INTERVAL 1 DAY)
+    FROM dates
+    WHERE date < DATE(?)
+  )
 
-SELECT 
-e.id,
-e.NAME,
-e.department,
-d.date AS DATE,
-a.in_time,
-a.lunch_out,
-a.lunch_in,
-a.out_time,
-a.permission_time,
-a.total_hours,
-a.working_hours,
-a.attendance_status,
-h.reason AS holiday_reason
+  SELECT 
+    e.id,
+    e.NAME,
+    e.department,
+    d.date AS DATE,
+    a.in_time,
+    a.lunch_out,
+    a.lunch_in,
+    a.out_time,
+    a.permission_time,
+    a.total_hours,
+    a.working_hours,
+    a.attendance_status,
+    h.reason AS holiday_reason
 
-FROM employees e
+  FROM employees e
+  CROSS JOIN dates d
 
-CROSS JOIN dates d
+  LEFT JOIN attendance a
+    ON e.id = a.employee_id
+    AND a.DATE = d.date
 
-LEFT JOIN attendance a
-ON e.id = a.employee_id
-AND a.DATE = d.date
+  LEFT JOIN holidays h
+    ON h.holiday_date = d.date
 
-LEFT JOIN holidays h
-ON h.holiday_date = d.date
+  ORDER BY e.NAME, d.date
+  `;
 
-ORDER BY e.NAME, d.date
-`;
+  db.query(sql, [start, end], async (err, rows) => {
 
-db.query(sql,[start,end], async (err,rows)=>{
+    if (err) return res.status(500).send("DB Error");
 
-if(err) return res.status(500).send("DB Error");
+    const workbook = new ExcelJS.Workbook();
 
-const workbook = new ExcelJS.Workbook();
+    /* ===================== */
+    /* GROUP BY EMPLOYEE */
+    /* ===================== */
+    const employeeMap = {};
 
-const sheet = workbook.addWorksheet("Daily Attendance");
+    rows.forEach(r => {
+      if (!employeeMap[r.id]) {
+        employeeMap[r.id] = {
+          name: r.NAME,
+          department: r.department,
+          data: []
+        };
+      }
+      employeeMap[r.id].data.push(r);
+    });
 
-sheet.columns = [
+    /* ===================== */
+    /* CREATE SHEETS */
+    /* ===================== */
+    Object.keys(employeeMap).forEach(empId => {
 
-{header:"Employee ID",key:"id",width:12},
-{header:"Name",key:"NAME",width:20},
-{header:"Department",key:"department",width:20},
-{header:"Date",key:"DATE",width:15},
-{header:"In Time",key:"in_time",width:12},
-{header:"Lunch Start",key:"lunch_out",width:12},
-{header:"Lunch End",key:"lunch_in",width:12},
-{header:"Out Time",key:"out_time",width:12},
-{header:"Status",key:"status",width:15},
-{header:"Permission Hours",key:"permission_time",width:15},
-{header:"Total Hours",key:"total_hours",width:15},
-{header:"Working Hours",key:"working_hours",width:15}
+      const emp = employeeMap[empId];
 
-];
+      const sheet = workbook.addWorksheet(emp.name.substring(0, 30));
 
-/* FILTER */
+      /* TITLE */
+      sheet.mergeCells("A1:I1");
+      sheet.getCell("A1").value = `${emp.name} - Attendance Report`;
+      sheet.getCell("A1").font = { size: 16, bold: true };
+      sheet.getCell("A1").alignment = { horizontal: "center" };
 
-sheet.autoFilter = {
-from:'B1',
-to:'B1'
-};
+      /* DATE RANGE */
+      sheet.mergeCells("A2:I2");
+      sheet.getCell("A2").value = `From ${start} To ${end}`;
+      sheet.getCell("A2").alignment = { horizontal: "center" };
 
-/* HEADER STYLE */
+      /* HEADER */
+      sheet.columns = [
+        { header:"Date", key:"DATE", width:15 },
+        { header:"In Time", key:"in_time", width:12 },
+        { header:"Lunch Out", key:"lunch_out", width:12 },
+        { header:"Lunch In", key:"lunch_in", width:12 },
+        { header:"Out Time", key:"out_time", width:12 },
+        { header:"Status", key:"status", width:15 },
+        { header:"Permission", key:"permission_time", width:15 },
+        { header:"Total Hours", key:"total_hours", width:15 },
+        { header:"Working Hours", key:"working_hours", width:15 }
+      ];
 
-sheet.getRow(1).eachCell(cell=>{
-cell.font={bold:true,color:{argb:"FFFFFFFF"}};
-cell.fill={
-type:"pattern",
-pattern:"solid",
-fgColor:{argb:"FF2F75B5"}
-};
-cell.alignment={horizontal:"center"};
+      /* HEADER STYLE */
+      sheet.getRow(3).eachCell(cell => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF1F4E78" }
+        };
+        cell.alignment = { horizontal: "center" };
+      });
+
+      /* FREEZE HEADER */
+      sheet.views = [{ state: 'frozen', ySplit: 3 }];
+
+      /* FILTER */
+      sheet.autoFilter = {
+        from: 'A3',
+        to: 'I3'
+      };
+
+      /* DATA */
+      emp.data.forEach((r, index) => {
+
+        let formattedDate = "";
+
+        if (r.DATE) {
+          let d = new Date(r.DATE);
+          formattedDate =
+            String(d.getDate()).padStart(2,'0') + "-" +
+            String(d.getMonth()+1).padStart(2,'0') + "-" +
+            d.getFullYear();
+        }
+
+        /* STATUS LOGIC */
+        let status = "Absent";
+
+        if (r.holiday_reason) status = "Holiday";
+        else if (r.attendance_status) status = r.attendance_status;
+        else if (r.in_time) status = "Working";
+
+        const row = sheet.addRow({
+          DATE: formattedDate,
+          in_time: r.in_time,
+          lunch_out: r.lunch_out,
+          lunch_in: r.lunch_in,
+          out_time: r.out_time,
+          status: status,
+          permission_time: r.permission_time,
+          total_hours: r.total_hours,
+          working_hours: r.working_hours
+        });
+
+        /* ALTERNATE ROW COLOR */
+        if (index % 2 === 0) {
+          row.eachCell(cell => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFF9F9F9" }
+            };
+          });
+        }
+
+        /* STATUS COLORS */
+        const statusCell = row.getCell(6);
+
+        if (status === "Holiday") {
+          statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FFFFEB9C"} };
+        }
+
+        if (status === "Absent") {
+          statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FFFF9999"} };
+        }
+
+        if (status === "Completed") {
+          statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FF92D050"} };
+        }
+
+      });
+
+      /* BORDER */
+      sheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          cell.border = {
+            top: {style:'thin'},
+            left: {style:'thin'},
+            bottom: {style:'thin'},
+            right: {style:'thin'}
+          };
+        });
+      });
+
+    });
+
+    /* ===================== */
+    /* MONTHLY SUMMARY */
+    /* ===================== */
+    const summarySheet = workbook.addWorksheet("Monthly Summary");
+
+    summarySheet.columns = [
+      {header:"Employee ID",key:"id",width:12},
+      {header:"Name",key:"name",width:20},
+      {header:"Department",key:"department",width:20},
+      {header:"Total Working Hours",key:"working",width:20},
+      {header:"Total Permission Hours",key:"permission",width:20},
+      {header:"Total Leave",key:"leave",width:15},
+      {header:"Total WFH",key:"wfh",width:10}
+    ];
+
+    const summary = {};
+
+    rows.forEach(r => {
+
+      if (!summary[r.id]) {
+        summary[r.id] = {
+          id: r.id,
+          name: r.NAME,
+          department: r.department,
+          working: 0,
+          permission: 0,
+          leave: 0,
+          wfh: 0
+        };
+      }
+
+      if (r.working_hours) {
+        const [h, m] = r.working_hours.split(":").map(Number);
+        summary[r.id].working += (h * 60) + m;
+      }
+
+      if (r.permission_time) {
+        const [h, m] = r.permission_time.split(":").map(Number);
+        summary[r.id].permission += (h * 60) + m;
+      }
+
+      if (!r.in_time && !r.holiday_reason) {
+        summary[r.id].leave += 1;
+      }
+
+      if (r.attendance_status === "WFH") {
+        summary[r.id].wfh += 1;
+      }
+
+    });
+
+    Object.values(summary).forEach(emp => {
+
+      summarySheet.addRow({
+        id: emp.id,
+        name: emp.name,
+        department: emp.department,
+        working: Math.floor(emp.working/60) + ":" + String(emp.working%60).padStart(2,"0"),
+        permission: Math.floor(emp.permission/60) + ":" + String(emp.permission%60).padStart(2,"0"),
+        leave: emp.leave,
+        wfh: emp.wfh
+      });
+
+    });
+
+    /* RESPONSE */
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=attendance_report.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  });
+
 });
 
-rows.forEach((r,index)=>{
 
-let formattedDate="";
-
-if(r.DATE){
-let d=new Date(r.DATE);
-
-formattedDate=
-String(d.getDate()).padStart(2,'0')+"-"+ 
-String(d.getMonth()+1).padStart(2,'0')+"-"+ 
-d.getFullYear();
-}
-
-/* STATUS */
-
-let status="Absent";
-
-if(r.holiday_reason){
-status="Holiday";
-}
-else if(r.attendance_status){
-status=r.attendance_status;
-}
-else if(r.in_time){
-status="Working";
-}
-
-const row=sheet.addRow({
-
-id:r.id,
-NAME:r.NAME,
-department:r.department,
-DATE:formattedDate,
-in_time:r.in_time,
-lunch_out:r.lunch_out,
-lunch_in:r.lunch_in,
-out_time:r.out_time,
-status:status,
-permission_time:r.permission_time,
-total_hours:r.total_hours,
-working_hours:r.working_hours
-
-});
-
-/* ALTERNATE ROW COLOR */
-
-if(index%2===0){
-row.eachCell(cell=>{
-cell.fill={
-type:"pattern",
-pattern:"solid",
-fgColor:{argb:"FFF2F2F2"}
-};
-});
-}
-
-/* HOLIDAY */
-
-if(status==="Holiday"){
-row.getCell(9).fill={
-type:"pattern",
-pattern:"solid",
-fgColor:{argb:"FFFFEB9C"}
-};
-}
-
-/* ABSENT */
-
-if(status==="Absent"){
-row.getCell(9).fill={
-type:"pattern",
-pattern:"solid",
-fgColor:{argb:"FFFF9999"}
-};
-}
-
-/* COMPLETED */
-
-if(status==="Completed"){
-row.getCell(9).fill={
-type:"pattern",
-pattern:"solid",
-fgColor:{argb:"FF92D050"}
-};
-}
-
-});
-
-
-/* ===================== */
-/* MONTH SUMMARY */
-/* ===================== */
-
-const summarySheet=workbook.addWorksheet("Monthly Summary");
-
-summarySheet.columns=[
-
-{header:"Employee ID",key:"id"},
-{header:"Name",key:"name"},
-{header:"Department",key:"department"},
-{header:"Total Working Hours",key:"working"},
-{header:"Total Permission Hours",key:"permission"},
-{header:"Total Leave",key:"leave"},
-{header:"Total WFH",key:"wfh"}
-
-];
-
-const summary={};
-
-rows.forEach(r=>{
-
-if(!summary[r.id]){
-
-summary[r.id]={
-id:r.id,
-name:r.NAME,
-department:r.department,
-working:0,
-permission:0,
-leave:0,
-wfh:0
-};
-
-}
-
-if(r.working_hours){
-
-const [h,m]=r.working_hours.split(":").map(Number);
-summary[r.id].working+=(h*60)+m;
-
-}
-
-if(r.permission_time){
-
-const [h,m]=r.permission_time.split(":").map(Number);
-summary[r.id].permission+=(h*60)+m;
-
-}
-
-if(!r.in_time && !r.holiday_reason){
-summary[r.id].leave+=1;
-}
-
-if(r.attendance_status==="WFH"){
-summary[r.id].wfh+=1;
-}
-
-});
-
-
-Object.values(summary).forEach(emp=>{
-
-summarySheet.addRow({
-
-id:emp.id,
-name:emp.name,
-department:emp.department,
-working:Math.floor(emp.working/60)+":"+String(emp.working%60).padStart(2,"0"),
-permission:Math.floor(emp.permission/60)+":"+String(emp.permission%60).padStart(2,"0"),
-leave:emp.leave,
-wfh:emp.wfh
-
-});
-
-});
-
-
-res.setHeader(
-"Content-Type",
-"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-);
-
-res.setHeader(
-"Content-Disposition",
-"attachment; filename=attendance_report.xlsx"
-);
-
-await workbook.xlsx.write(res);
-
-res.end();
-
-});
-});
 
 /* ---------------- UPDATE EMPLOYEE ---------------- */
 
