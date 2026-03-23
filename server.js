@@ -636,6 +636,7 @@ db.query(
 });
 
 
+
 /* ---------------- ATTENDANCE REPORT ---------------- */
 const ExcelJS = require("exceljs");
 
@@ -686,9 +687,7 @@ app.get("/admin/report", async (req, res) => {
 
     const workbook = new ExcelJS.Workbook();
 
-    /* ===================== */
     /* GROUP BY EMPLOYEE */
-    /* ===================== */
     const employeeMap = {};
 
     rows.forEach(r => {
@@ -702,14 +701,14 @@ app.get("/admin/report", async (req, res) => {
       employeeMap[r.id].data.push(r);
     });
 
-    /* ===================== */
     /* CREATE SHEETS */
-    /* ===================== */
     Object.keys(employeeMap).forEach(empId => {
 
       const emp = employeeMap[empId];
 
-      const sheet = workbook.addWorksheet(emp.name.substring(0, 30));
+      const sheet = workbook.addWorksheet(
+        `${emp.name}_${empId}`.substring(0, 31)
+      );
 
       /* TITLE */
       sheet.mergeCells("A1:I1");
@@ -722,17 +721,23 @@ app.get("/admin/report", async (req, res) => {
       sheet.getCell("A2").value = `From ${start} To ${end}`;
       sheet.getCell("A2").alignment = { horizontal: "center" };
 
-      /* HEADER */
+      /* FORCE HEADER ROW */
+      sheet.getRow(3).values = [
+        "Date","In Time","Lunch Out","Lunch In","Out Time",
+        "Status","Permission","Total Hours","Working Hours"
+      ];
+
+      /* COLUMN WIDTH */
       sheet.columns = [
-        { header:"Date", key:"DATE", width:15 },
-        { header:"In Time", key:"in_time", width:12 },
-        { header:"Lunch Out", key:"lunch_out", width:12 },
-        { header:"Lunch In", key:"lunch_in", width:12 },
-        { header:"Out Time", key:"out_time", width:12 },
-        { header:"Status", key:"status", width:15 },
-        { header:"Permission", key:"permission_time", width:15 },
-        { header:"Total Hours", key:"total_hours", width:15 },
-        { header:"Working Hours", key:"working_hours", width:15 }
+        { key:"DATE", width:15 },
+        { key:"in_time", width:12 },
+        { key:"lunch_out", width:12 },
+        { key:"lunch_in", width:12 },
+        { key:"out_time", width:12 },
+        { key:"status", width:15 },
+        { key:"permission_time", width:15 },
+        { key:"total_hours", width:15 },
+        { key:"working_hours", width:15 }
       ];
 
       /* HEADER STYLE */
@@ -746,14 +751,19 @@ app.get("/admin/report", async (req, res) => {
         cell.alignment = { horizontal: "center" };
       });
 
-      /* FREEZE HEADER */
       sheet.views = [{ state: 'frozen', ySplit: 3 }];
 
-      /* FILTER */
       sheet.autoFilter = {
         from: 'A3',
         to: 'I3'
       };
+
+      /* SUMMARY VARIABLES */
+      let totalWorkingDays = 0;
+      let totalAbsent = 0;
+      let totalHolidays = 0;
+      let totalWeekOff = 0;
+      let totalPresent = 0;
 
       /* DATA */
       emp.data.forEach((r, index) => {
@@ -768,26 +778,38 @@ app.get("/admin/report", async (req, res) => {
             d.getFullYear();
         }
 
-        /* STATUS LOGIC */
         let status = "Absent";
 
         if (r.holiday_reason) status = "Holiday";
         else if (r.attendance_status) status = r.attendance_status;
         else if (r.in_time) status = "Working";
 
+        /* COUNTING LOGIC */
+        if (status === "Holiday") {
+          totalHolidays++;
+          if (r.holiday_reason === "WEEK OFF") totalWeekOff++;
+        } 
+        else if (status === "Absent") {
+          totalAbsent++;
+        } 
+        else {
+          totalWorkingDays++;
+          totalPresent++;
+        }
+
         const row = sheet.addRow({
           DATE: formattedDate,
-          in_time: r.in_time,
-          lunch_out: r.lunch_out,
-          lunch_in: r.lunch_in,
-          out_time: r.out_time,
+          in_time: r.in_time || "-",
+          lunch_out: r.lunch_out || "-",
+          lunch_in: r.lunch_in || "-",
+          out_time: r.out_time || "-",
           status: status,
-          permission_time: r.permission_time,
-          total_hours: r.total_hours,
-          working_hours: r.working_hours
+          permission_time: r.permission_time || "-",
+          total_hours: r.total_hours || "-",
+          working_hours: r.working_hours || "-"
         });
 
-        /* ALTERNATE ROW COLOR */
+        /* ZEBRA */
         if (index % 2 === 0) {
           row.eachCell(cell => {
             cell.fill = {
@@ -809,15 +831,27 @@ app.get("/admin/report", async (req, res) => {
           statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FFFF9999"} };
         }
 
-        if (status === "Completed") {
+        if (status === "Completed" || status === "Present") {
           statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FF92D050"} };
         }
 
       });
 
+      /* SUMMARY UI */
+      const lastRow = sheet.lastRow.number + 2;
+
+      sheet.getCell(`A${lastRow}`).value = "Summary";
+      sheet.getCell(`A${lastRow}`).font = { bold: true, size: 14 };
+
+      sheet.addRow(["Total Working Days", totalWorkingDays]);
+      sheet.addRow(["Total Present", totalPresent]);
+      sheet.addRow(["Total Absent", totalAbsent]);
+      sheet.addRow(["Total Holidays", totalHolidays]);
+      sheet.addRow(["Total Week Off", totalWeekOff]);
+
       /* BORDER */
-      sheet.eachRow((row) => {
-        row.eachCell((cell) => {
+      sheet.eachRow(row => {
+        row.eachCell(cell => {
           cell.border = {
             top: {style:'thin'},
             left: {style:'thin'},
@@ -829,9 +863,7 @@ app.get("/admin/report", async (req, res) => {
 
     });
 
-    /* ===================== */
     /* MONTHLY SUMMARY */
-    /* ===================== */
     const summarySheet = workbook.addWorksheet("Monthly Summary");
 
     summarySheet.columns = [
@@ -881,7 +913,6 @@ app.get("/admin/report", async (req, res) => {
     });
 
     Object.values(summary).forEach(emp => {
-
       summarySheet.addRow({
         id: emp.id,
         name: emp.name,
@@ -891,7 +922,6 @@ app.get("/admin/report", async (req, res) => {
         leave: emp.leave,
         wfh: emp.wfh
       });
-
     });
 
     /* RESPONSE */
@@ -911,6 +941,7 @@ app.get("/admin/report", async (req, res) => {
   });
 
 });
+
 
 
 
