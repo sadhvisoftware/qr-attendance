@@ -1133,6 +1133,7 @@ res.send("Employee Deleted");
 
 
 
+
 app.post("/admin/update-attendance",(req,res)=>{
 
 const {
@@ -1145,73 +1146,116 @@ out_time,
 permission_type,
 permission_time,
 attendance_status
-}=req.body;
-
-/* CHECK ROW EXIST */
-
-db.query(
-"SELECT * FROM attendance WHERE employee_id=? AND DATE=?",
-[employee_id,date],
-(err,rows)=>{
-
-if(err){
-console.log(err);
-return res.send("DB Error");
-}
-
-/* IF EXIST → UPDATE */
-
-if(rows.length>0){
-
-db.query(`
-UPDATE attendance
-SET
-in_time=?,
-lunch_out=?,
-lunch_in=?,
-out_time=?,
-permission_type=?,
-permission_time=?,
-attendance_status=?
-WHERE employee_id=? AND DATE=?`,
-[
-in_time,
-lunch_out,
-lunch_in,
-out_time,
-permission_type,
-permission_time,
-attendance_status,
-employee_id,
-date
-],()=>{
-
-res.send("Updated Successfully");
-
-});
-
-}
-
-/* IF NOT EXIST → INSERT */
-
-else{
+} = req.body;
 
 db.query(`
 INSERT INTO attendance
-(employee_id,DATE,attendance_status)
-VALUES (?,?,?)`,
+(employee_id, DATE, in_time, lunch_out, lunch_in, out_time, permission_type, permission_time, attendance_status)
+VALUES (?,?,?,?,?,?,?,?,?)
+ON DUPLICATE KEY UPDATE
+in_time=VALUES(in_time),
+lunch_out=VALUES(lunch_out),
+lunch_in=VALUES(lunch_in),
+out_time=VALUES(out_time),
+permission_type=VALUES(permission_type),
+permission_time=VALUES(permission_time),
+attendance_status=VALUES(attendance_status)
+`,
 [
 employee_id,
 date,
-attendance_status
-],()=>{
+in_time || null,
+lunch_out || null,
+lunch_in || null,
+out_time || null,
+permission_type || null,
+permission_time || null,
+attendance_status || null
+],
+(err)=>{
+  if(err){
+    console.log(err);
+    return res.send("DB Error");
+  }
 
-res.send("WFH / Leave Added");
+  res.send("Attendance Saved Successfully");
+});
 
 });
 
-}
 
-});
+app.get("/employee/report", async (req, res) => {
+
+  const { employee_id, start, end } = req.query;
+
+  if (!employee_id || !start || !end) {
+    return res.status(400).send("Missing params");
+  }
+
+  const sql = `
+  SELECT 
+    DATE,
+    in_time,
+    lunch_out,
+    lunch_in,
+    out_time,
+    permission_time,
+    total_hours,
+    working_hours,
+    attendance_status
+  FROM attendance
+  WHERE employee_id = ?
+  AND DATE BETWEEN ? AND ?
+  ORDER BY DATE ASC
+  `;
+
+  db.query(sql, [employee_id, start, end], async (err, rows) => {
+
+    if (err) return res.status(500).send("DB Error");
+
+    const ExcelJS = require("exceljs");
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet("My Report");
+
+    sheet.columns = [
+      { header: "Date", key: "DATE", width: 15 },
+      { header: "In Time", key: "in_time", width: 12 },
+      { header: "Lunch Out", key: "lunch_out", width: 12 },
+      { header: "Lunch In", key: "lunch_in", width: 12 },
+      { header: "Out Time", key: "out_time", width: 12 },
+      { header: "Status", key: "attendance_status", width: 15 },
+      { header: "Permission", key: "permission_time", width: 15 },
+      { header: "Total Hours", key: "total_hours", width: 15 },
+      { header: "Working Hours", key: "working_hours", width: 15 }
+    ];
+
+    rows.forEach(r => {
+      sheet.addRow({
+        DATE: new Date(r.DATE).toLocaleDateString(),
+        in_time: r.in_time || "-",
+        lunch_out: r.lunch_out || "-",
+        lunch_in: r.lunch_in || "-",
+        out_time: r.out_time || "-",
+        attendance_status: r.attendance_status || "-",
+        permission_time: r.permission_time || "-",
+        total_hours: r.total_hours || "-",
+        working_hours: r.working_hours || "-"
+      });
+    });
+
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=my_attendance.xlsx"
+    );
+
+    await workbook.xlsx.write(res);
+    res.end();
+
+  });
 
 });

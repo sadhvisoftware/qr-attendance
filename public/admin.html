@@ -370,7 +370,16 @@ Employee
 </button>
 
 <button class="btn btn-sm btn-warning"
-onclick="openEditAttendance(${row.employee_id},'${row.DATE}','${row.in_time}','${row.lunch_out}','${row.lunch_in}','${row.out_time}','${row.permission_type}','${row.permission_time}')">
+onclick="openEditAttendance(
+  ${row.employee_id},
+  '${row.DATE || document.getElementById("datePicker").value}',
+  '${row.in_time || ""}',
+  '${row.lunch_out || ""}',
+  '${row.lunch_in || ""}',
+  '${row.out_time || ""}',
+  '${row.permission_type || ""}',
+  '${row.permission_time || ""}'
+)">
 Attendance
 </button>
 

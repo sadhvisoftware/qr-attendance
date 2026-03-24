@@ -145,7 +145,33 @@ padding:12px;
 
 </div>
 
+<div class="container mt-4">
+   ...
+   <!-- Holidays card -->
+
+   <!-- ADD HERE 👇 -->
+   <div class="card-ui">
+     <h5 class="mb-3">📊 Download My Report</h5>
+
+     <div class="row g-2">
+       <div class="col">
+         <input type="date" id="startDate" class="form-control">
+       </div>
+       <div class="col">
+         <input type="date" id="endDate" class="form-control">
+       </div>
+     </div>
+
+     <button class="btn btn-success w-100 mt-3" onclick="downloadReport()">
+       ⬇ Download Excel
+     </button>
+   </div>
+
+</div> <!-- container close -->
+
 </div>
+
+
 
 <script>
 
@@ -274,6 +300,22 @@ document.getElementById("actionPopup").style.display="flex";
 });
 
 scannerStarted=true;
+
+}
+
+function downloadReport() {
+
+  const start = document.getElementById("startDate").value;
+  const end = document.getElementById("endDate").value;
+
+  if (!start || !end) {
+    alert("Select date range");
+    return;
+  }
+
+  const url = `/employee/report?employee_id=${employeeId}&start=${start}&end=${end}`;
+
+  window.open(url, "_blank");
 
 }
 
