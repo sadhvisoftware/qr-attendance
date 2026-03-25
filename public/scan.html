@@ -455,57 +455,70 @@ function controlOutButton(){
 
   const now = new Date();
 
-  const currentTime = now.toLocaleTimeString("en-US", {
-    timeZone: "Asia/Kolkata",
-    hour12: false
-  });
+  const currentTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+  );
 
-  const [h, m] = currentTime.split(":").map(Number);
-
-  // 🔥 GET VALUES FROM UI (already you have these)
-  const workingHoursText = document.getElementById("workingHours")?.innerText || "00:00";
   const permissionType = document.getElementById("permissionType")?.innerText || "";
 
-  const [wh, wm] = workingHoursText.split(":").map(Number);
-  const totalMinutes = (wh * 60) + wm;
+  // 🔥 GET TIMES FROM UI
+  const inTimeText = document.getElementById("inTime")?.innerText;
+  const lunchOutText = document.getElementById("lunchOut")?.innerText;
+  const lunchInText = document.getElementById("lunchIn")?.innerText;
 
-  const minRequired = (7 * 60) + 30; //  change time based on company rule
+  if(!inTimeText || inTimeText === "-"){
+    disableBtn(outBtn);
+    return;
+  }
 
-  /*  CONDITIONS */
+  // 🔥 convert to Date
+  function parseTime(t){
+    return new Date(`1970-01-01 ${t}`);
+  }
 
-  //  After 7 PM → always allow
-  if(h >= 19){
+  const inTime = parseTime(inTimeText);
+
+  let workedMinutes = 0;
+
+  // before lunch
+  if(lunchOutText && lunchOutText !== "-"){
+    const lunchOut = parseTime(lunchOutText);
+    workedMinutes += (lunchOut - inTime) / 60000;
+  } else {
+    workedMinutes += (currentTime - inTime) / 60000;
+  }
+
+  // after lunch
+  if(lunchInText && lunchInText !== "-"){
+    const lunchIn = parseTime(lunchInText);
+    workedMinutes += (currentTime - lunchIn) / 60000;
+  }
+
+  const minRequired = 7.5 * 60; // 7h 30m
+
+  const currentHour = currentTime.getHours();
+
+  /* CONDITIONS */
+
+  // after 7 PM
+  if(currentHour >= 19){
     enableBtn(outBtn);
     return;
   }
 
-  // If permission taken → allow
+  // permission
   if(permissionType === "Permission"){
     enableBtn(outBtn);
     return;
   }
 
-  //  If worked enough hours → allow
-  if(totalMinutes >= minRequired){
+  // enough work
+  if(workedMinutes >= minRequired){
     enableBtn(outBtn);
     return;
   }
 
-  //  Otherwise disable
   disableBtn(outBtn);
-
-}
-
-function enableBtn(btn){
-  btn.disabled = false;
-  btn.style.opacity = "1";
-  btn.innerText = "OUT TIME";
-}
-
-function disableBtn(btn){
-  btn.disabled = true;
-  btn.style.opacity = "0.6";
-  btn.innerText = "Complete required work hours";
 }
 
 // Send Attendance Data to Server
