@@ -775,6 +775,7 @@ app.get("/admin/report", async (req, res) => {
       let totalWFH = 0;
       let totalHalfDay = 0;
       let totalPermission = 0;
+      let totalPermissionMinutes = 0;
 
       emp.data.forEach((r) => {
 
@@ -835,8 +836,18 @@ app.get("/admin/report", async (req, res) => {
           });
         }
 
+        /* 🔥 PERMISSION HOURS SUM */
+if (r.permission_time) {
+  const [h, m] = r.permission_time.split(":").map(Number);
+  totalPermissionMinutes += (h * 60) + m;
+}
+
       });
 
+      /* 🔥 PERMISSION HOURS TOTAL */
+      const totalPermissionHours = Math.floor(totalPermissionMinutes / 60);
+      const totalPermissionMinutesRemaining = totalPermissionMinutes % 60;
+      const totalPermissionTime = `${String(totalPermissionHours).padStart(2,"0")}:${String(totalPermissionMinutesRemaining).padStart(2,"0")}`;
       /* SUMMARY */
       const lastRow = sheet.lastRow.number + 2;
 
@@ -849,6 +860,8 @@ app.get("/admin/report", async (req, res) => {
       sheet.addRow(["Total WFH", totalWFH]);
       sheet.addRow(["Total Half Days", totalHalfDay]);
       sheet.addRow(["Total Permissions", totalPermission]);
+      sheet.addRow(["Total Permission Time", totalPermissionTime]);
+
     });
 
     res.setHeader(
