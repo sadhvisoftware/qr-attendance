@@ -379,6 +379,7 @@ LEFT JOIN attendance a
 ON e.id=a.employee_id AND a.DATE=?
 LEFT JOIN holidays h
 ON h.holiday_date=?
+WHERE e.role='employee'
 ORDER BY e.NAME ASC
 `;
 

@@ -1,1 +1,1 @@
-ALTER TABLE attendance ADD COLUMN mode VARCHAR(20) DEFAULT 'OFFICE';
+SELECT * FROM employees WHERE role='employee'
