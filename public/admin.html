@@ -378,33 +378,34 @@ let status="Absent";
 let badge="badge bg-danger";
 
 /* Holiday */
-
 if(row.holiday_reason){
-status="Holiday";
-badge="badge bg-warning";
+  status="Holiday";
+  badge="badge bg-warning";
+}
+
+/* Permission FIRST CHECK */
+else if(row.attendance_status === "Permission"){
+  status="Permission";
+  badge="badge bg-secondary"; // or purple custom
 }
 
 /* WFH */
-
 else if(row.attendance_status==="WFH"){
-status="WFH";
-badge="badge bg-primary";
+  status="WFH";
+  badge="badge bg-primary";
 }
 
 /* Working */
-
 else if(row.in_time && !row.out_time){
-status="Working";
-badge="badge bg-info";
+  status="Working";
+  badge="badge bg-info";
 }
 
 /* Completed */
-
 else if(row.out_time){
-status="Completed";
-badge="badge bg-success";
+  status="Completed";
+  badge="badge bg-success";
 }
-
 const tr=`
 
 <tr>
