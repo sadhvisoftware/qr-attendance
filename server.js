@@ -725,13 +725,12 @@ app.get("/admin/report", async (req, res) => {
       sheet.getCell("A2").value = `From ${start} To ${end}`;
       sheet.getCell("A2").alignment = { horizontal: "center" };
 
-      /* FORCE HEADER ROW */
+      /* HEADER */
       sheet.getRow(3).values = [
         "Date","In Time","Lunch Out","Lunch In","Out Time",
         "Status","Permission","Total Hours","Working Hours"
       ];
 
-      /* COLUMN WIDTH */
       sheet.columns = [
         { key:"DATE", width:15 },
         { key:"in_time", width:12 },
@@ -762,12 +761,13 @@ app.get("/admin/report", async (req, res) => {
         to: 'I3'
       };
 
-      /* SUMMARY VARIABLES */
+      /* 🔥 SUMMARY VARIABLES */
       let totalWorkingDays = 0;
       let totalAbsent = 0;
       let totalHolidays = 0;
-      let totalWeekOff = 0;
-      let totalPresent = 0;
+
+      let totalWFH = 0;
+      let totalPermissionMinutes = 0;
 
       /* DATA */
       emp.data.forEach((r, index) => {
@@ -788,7 +788,7 @@ app.get("/admin/report", async (req, res) => {
         else if (r.attendance_status) status = r.attendance_status;
         else if (r.in_time) status = "Working";
 
-        /* COUNTING LOGIC */
+        /* COUNTING */
         if (status === "Holiday") {
           totalHolidays++;
           if (r.holiday_reason === "WEEK OFF") totalWeekOff++;
@@ -799,6 +799,17 @@ app.get("/admin/report", async (req, res) => {
         else {
           totalWorkingDays++;
           totalPresent++;
+        }
+
+        /* 🔥 WFH COUNT */
+        if (r.attendance_status === "WFH") {
+          totalWFH++;
+        }
+
+        /* 🔥 PERMISSION TIME */
+        if (r.permission_time) {
+          const [h, m] = r.permission_time.split(":").map(Number);
+          totalPermissionMinutes += (h * 60) + m;
         }
 
         const row = sheet.addRow({
@@ -813,119 +824,28 @@ app.get("/admin/report", async (req, res) => {
           working_hours: r.working_hours || "-"
         });
 
-        /* ZEBRA */
-        if (index % 2 === 0) {
-          row.eachCell(cell => {
-            cell.fill = {
-              type: "pattern",
-              pattern: "solid",
-              fgColor: { argb: "FFF9F9F9" }
-            };
-          });
-        }
-
-        /* STATUS COLORS */
-        const statusCell = row.getCell(6);
-
-        if (status === "Holiday") {
-          statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FFFFEB9C"} };
-        }
-
-        if (status === "Absent") {
-          statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FFFF9999"} };
-        }
-
-        if (status === "Completed" || status === "Present") {
-          statusCell.fill = { type:"pattern", pattern:"solid", fgColor:{argb:"FF92D050"} };
-        }
-
       });
 
-      /* SUMMARY UI */
+      /* 🔥 CONVERT PERMISSION TIME */
+      let permissionHours = Math.floor(totalPermissionMinutes / 60);
+      let permissionMins = totalPermissionMinutes % 60;
+
+      let totalPermissionTime =
+        String(permissionHours).padStart(2, "0") + ":" +
+        String(permissionMins).padStart(2, "0");
+
+      /* SUMMARY */
       const lastRow = sheet.lastRow.number + 2;
 
       sheet.getCell(`A${lastRow}`).value = "Summary";
       sheet.getCell(`A${lastRow}`).font = { bold: true, size: 14 };
 
       sheet.addRow(["Total Working Days", totalWorkingDays]);
-      sheet.addRow(["Total Present", totalPresent]);
       sheet.addRow(["Total Absent", totalAbsent]);
       sheet.addRow(["Total Holidays", totalHolidays]);
-      sheet.addRow(["Total Week Off", totalWeekOff]);
+      sheet.addRow(["Total WFH", totalWFH]);
+      sheet.addRow(["Total Permission Hours", totalPermissionTime]);
 
-      /* BORDER */
-      sheet.eachRow(row => {
-        row.eachCell(cell => {
-          cell.border = {
-            top: {style:'thin'},
-            left: {style:'thin'},
-            bottom: {style:'thin'},
-            right: {style:'thin'}
-          };
-        });
-      });
-
-    });
-
-    /* MONTHLY SUMMARY */
-    const summarySheet = workbook.addWorksheet("Monthly Summary");
-
-    summarySheet.columns = [
-      {header:"Employee ID",key:"id",width:12},
-      {header:"Name",key:"name",width:20},
-      {header:"Department",key:"department",width:20},
-      {header:"Total Working Hours",key:"working",width:20},
-      {header:"Total Permission Hours",key:"permission",width:20},
-      {header:"Total Leave",key:"leave",width:15},
-      {header:"Total WFH",key:"wfh",width:10}
-    ];
-
-    const summary = {};
-
-    rows.forEach(r => {
-
-      if (!summary[r.id]) {
-        summary[r.id] = {
-          id: r.id,
-          name: r.NAME,
-          department: r.department,
-          working: 0,
-          permission: 0,
-          leave: 0,
-          wfh: 0
-        };
-      }
-
-      if (r.working_hours) {
-        const [h, m] = r.working_hours.split(":").map(Number);
-        summary[r.id].working += (h * 60) + m;
-      }
-
-      if (r.permission_time) {
-        const [h, m] = r.permission_time.split(":").map(Number);
-        summary[r.id].permission += (h * 60) + m;
-      }
-
-      if (!r.in_time && !r.holiday_reason) {
-        summary[r.id].leave += 1;
-      }
-
-      if (r.attendance_status === "WFH") {
-        summary[r.id].wfh += 1;
-      }
-
-    });
-
-    Object.values(summary).forEach(emp => {
-      summarySheet.addRow({
-        id: emp.id,
-        name: emp.name,
-        department: emp.department,
-        working: Math.floor(emp.working/60) + ":" + String(emp.working%60).padStart(2,"0"),
-        permission: Math.floor(emp.permission/60) + ":" + String(emp.permission%60).padStart(2,"0"),
-        leave: emp.leave,
-        wfh: emp.wfh
-      });
     });
 
     /* RESPONSE */
