@@ -774,6 +774,7 @@ app.get("/admin/report", async (req, res) => {
       let totalHolidays = 0;
       let totalWFH = 0;
       let totalHalfDay = 0;
+      let totalPermission = 0;
 
       emp.data.forEach((r) => {
 
@@ -800,7 +801,7 @@ app.get("/admin/report", async (req, res) => {
 
         if (status === "WFH") totalWFH++;
         if (status === "Half Day") totalHalfDay++;
-
+        if (status === "Permission") totalPermission++;
         /* ADD ROW */
         const row = sheet.addRow({
           DATE: formattedDate,
@@ -847,7 +848,7 @@ app.get("/admin/report", async (req, res) => {
       sheet.addRow(["Total Holidays", totalHolidays]);
       sheet.addRow(["Total WFH", totalWFH]);
       sheet.addRow(["Total Half Days", totalHalfDay]);
-
+      sheet.addRow(["Total Permissions", totalPermission]);
     });
 
     res.setHeader(
