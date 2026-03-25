@@ -288,7 +288,7 @@ permission_time=?,
 out_time=?,
 total_hours=?,
 working_hours=?,
-attendance_status='Completed'
+attendance_status='Permission'
 WHERE id=?`,
 [
 permissionTime,
@@ -818,6 +818,7 @@ app.get("/admin/report", async (req, res) => {
         let color = "";
 
         if (status === "Present" || status === "Completed") color = "FFCCFFCC"; 
+        if (status === "Permission") color = "FFD9B3FF"; // Purple
         if (status === "Absent") color = "FFFF9999";      // Red
         if (status === "Holiday") color = "FFFFFF99";     // Yellow
         if (status === "Half Day") color = "FFFFCC99";    // Orange
