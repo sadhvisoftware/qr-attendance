@@ -769,6 +769,9 @@ app.get("/admin/report", async (req, res) => {
       let totalWFH = 0;
       let totalPermissionMinutes = 0;
 
+      let totalHalfDay = 0;
+      let totalOvertimeMinutes = 0;
+
       /* DATA */
       emp.data.forEach((r, index) => {
 
@@ -791,7 +794,6 @@ app.get("/admin/report", async (req, res) => {
         /* COUNTING */
         if (status === "Holiday") {
           totalHolidays++;
-          if (r.holiday_reason === "WEEK OFF") totalWeekOff++;
         } 
         else if (status === "Absent") {
           totalAbsent++;
@@ -825,6 +827,30 @@ app.get("/admin/report", async (req, res) => {
 
       });
 
+      /* HALF DAY */
+if (r.attendance_status === "Half Day") {
+  totalHalfDay++;
+}
+
+/* OVERTIME (above 8:30 hrs) */
+if (r.working_hours) {
+  const [h, m] = r.working_hours.split(":").map(Number);
+  let totalMin = (h * 60) + m;
+
+  const officeMin = (8 * 60) + 30; // 8:30
+
+  if (totalMin > officeMin) {
+    totalOvertimeMinutes += (totalMin - officeMin);
+  }
+}
+
+let overtimeHours = Math.floor(totalOvertimeMinutes / 60);
+let overtimeMins = totalOvertimeMinutes % 60;
+
+let totalOvertimeTime =
+  String(overtimeHours).padStart(2, "0") + ":" +
+  String(overtimeMins).padStart(2, "0");
+
       /* 🔥 CONVERT PERMISSION TIME */
       let permissionHours = Math.floor(totalPermissionMinutes / 60);
       let permissionMins = totalPermissionMinutes % 60;
@@ -843,7 +869,9 @@ app.get("/admin/report", async (req, res) => {
       sheet.addRow(["Total Absent", totalAbsent]);
       sheet.addRow(["Total Holidays", totalHolidays]);
       sheet.addRow(["Total WFH", totalWFH]);
+      sheet.addRow(["Total Half Days", totalHalfDay]);
       sheet.addRow(["Total Permission Hours", totalPermissionTime]);
+      sheet.addRow(["Total Overtime", totalOvertimeTime]);
 
     });
 
