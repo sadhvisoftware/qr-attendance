@@ -798,7 +798,6 @@ app.get("/admin/report", async (req, res) => {
         } 
         else {
           totalWorkingDays++;
-          totalPresent++;
         }
 
         /* 🔥 WFH COUNT */
