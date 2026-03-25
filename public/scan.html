@@ -494,14 +494,14 @@ function controlOutButton(){
     workedMinutes += (currentTime - lunchIn) / 60000;
   }
 
-  const minRequired = 10.5 * 60; // 7h 30m
+  const minRequired = 7.5 * 60; // 7h 30m
 
   const currentHour = currentTime.getHours();
 
   /* CONDITIONS */
 
   // after 7 PM
-  if(currentHour >= 20){
+  if(currentHour >= 19){
     enableBtn(outBtn);
     return;
   }
