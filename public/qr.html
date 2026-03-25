@@ -119,9 +119,10 @@ padding:6px 10px;
 <th>Name</th>
 <th>Department</th>
 <th>Date</th>
-<th>Time</th>
+<th>IN Time</th>
 <th>Lunch Start</th>
 <th>Lunch End</th>
+<th>OUT Time</th>
 <th>Status</th>
 </tr>
 
@@ -392,9 +393,10 @@ const tr=`
 <td>${emp.name}</td>
 <td>${emp.department || "-"}</td>
 <td>${new Date().toLocaleDateString()}</td>
-<td>${formatTime12hr(emp.time)}</td>
+<td>${formatTime12hr(emp.in_time)}</td>
 <td>${formatTime12hr(emp.lunch_start)}</td>
 <td>${formatTime12hr(emp.lunch_end)}</td>
+<td>${formatTime12hr(emp.out_time)}</td>
 <td><span class="badge bg-${badge}">${emp.status}</span></td>
 </tr>
 `;

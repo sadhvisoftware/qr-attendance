@@ -484,54 +484,46 @@ if(err) return res.status(500).send("DB Error");
 let data = results.map(r=>{
 
 let status="Absent";
-let time=null;
 
+/* STATUS LOGIC (same) */
 if(r.permission_type==="Half Day"){
 
-if(r.in_time && !r.out_time){
-status="Half Day Working";
-time=r.in_time;
-}
-
-else if(r.out_time){
-status="OUT";
-time=r.out_time;
-}
+  if(r.in_time && !r.out_time){
+    status="Half Day Working";
+  }
+  else if(r.out_time){
+    status="OUT";
+  }
 
 }
-
 else{
 
-if(r.out_time){
-status="OUT";
-time=r.out_time;
-}
-
-else if(r.in_time && !r.lunch_out){
-status="IN";
-time=r.in_time;
-}
-
-else if(r.lunch_out && !r.lunch_in){
-status="Lunch Break";
-time=r.lunch_out;
-}
-
-else if(r.lunch_in && !r.out_time){
-status="Working";
-time=r.lunch_in;
-}
+  if(r.out_time){
+    status="OUT";
+  }
+  else if(r.in_time && !r.lunch_out){
+    status="IN";
+  }
+  else if(r.lunch_out && !r.lunch_in){
+    status="Lunch Break";
+  }
+  else if(r.lunch_in && !r.out_time){
+    status="Working";
+  }
 
 }
 
+/* 🔥 RETURN CLEAN DATA */
 return {
-id:r.id,
-name:r.NAME,
-department:r.department,
-status,
-time,
-lunch_start:r.lunch_out,
-lunch_end:r.lunch_in
+  id: r.id,
+  name: r.NAME,
+  department: r.department,
+  status,
+
+  in_time: r.in_time,
+  lunch_start: r.lunch_out,
+  lunch_end: r.lunch_in,
+  out_time: r.out_time
 };
 
 });
