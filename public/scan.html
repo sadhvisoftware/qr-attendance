@@ -441,6 +441,39 @@ window.location.href="login.html";
 
 }
 
+// Initial
+window.onload = () => {
+  controlOutButton();
+  setInterval(controlOutButton, 60000);
+};
+
+// Disable OUT button before 7 PM
+function controlOutButton(){
+
+  const now = new Date();
+
+  const currentTime = now.toLocaleTimeString("en-US", {
+    timeZone: "Asia/Kolkata",
+    hour12: false
+  });
+
+  const outBtn = document.getElementById("outBtn");
+  if(!outBtn) return; // safety
+
+  const [h, m] = currentTime.split(":").map(Number);
+
+  if(h < 19){
+    outBtn.disabled = true;
+    outBtn.style.opacity = "0.6";
+    outBtn.innerText = "OUT TIME (Available after 7 PM)";
+  } else {
+    outBtn.disabled = false;
+    outBtn.style.opacity = "1";
+    outBtn.innerText = "OUT TIME";
+  }
+}
+
+// Send Attendance Data to Server
 function sendAttendance(type){
 
 document.getElementById("actionPopup").style.display="none";
@@ -515,7 +548,7 @@ Lunch End
 Afternoon Permission
 </button>
 
-<button class="btn btn-danger w-100" onclick="sendAttendance('OUT')">
+<button id="outBtn" class="btn btn-danger w-100" onclick="sendAttendance('OUT')">
 OUT TIME
 </button>
 

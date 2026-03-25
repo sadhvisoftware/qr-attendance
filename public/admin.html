@@ -59,6 +59,7 @@ background:#f1f5ff;
 
 <h3 class="header">📊 SADHVI ATTENDANCE DASHBOARD </h3>
 
+<button class="btn btn-success me-2" onclick="openQR()">📱 Generate QR</button>
 <button class="btn btn-danger" onclick="logout()">Logout</button>
 
 </div>
@@ -252,6 +253,11 @@ if ("serviceWorker" in navigator) {
 
   });
 
+}
+
+
+function openQR(){
+  window.open("/qr.html", "_blank");
 }
 
 /* 🔥 POPUP UI FUNCTION */
