@@ -178,9 +178,26 @@ function updateClock(){
 
 const now=new Date();
 
-document.getElementById("clock").innerText=
-"Office Time : "+now.toLocaleTimeString();
+document.getElementById("clock").innerText =
+"Office Time : " + now.toLocaleTimeString("en-IN", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: true
+});
 
+}
+
+function formatTime12hr(time){
+  if(!time) return "-";
+
+  const [h,m] = time.split(":");
+  let hour = parseInt(h);
+
+  let ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+
+  return `${hour}:${m} ${ampm}`;
 }
 
 setInterval(updateClock,1000);
@@ -375,9 +392,9 @@ const tr=`
 <td>${emp.name}</td>
 <td>${emp.department || "-"}</td>
 <td>${new Date().toLocaleDateString()}</td>
-<td>${emp.time || "-"}</td>
-<td>${emp.lunch_start || "-"}</td>
-<td>${emp.lunch_end || "-"}</td>
+<td>${formatTime12hr(emp.time)}</td>
+<td>${formatTime12hr(emp.lunch_start)}</td>
+<td>${formatTime12hr(emp.lunch_end)}</td>
 <td><span class="badge bg-${badge}">${emp.status}</span></td>
 </tr>
 `;
