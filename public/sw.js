@@ -1,4 +1,4 @@
-const CACHE_NAME = "qr-attendance-v1"; // 🔥 version change here
+const CACHE_NAME = "qr-attendance-v1.1"; 
 
 const urlsToCache = [
   "/",
@@ -29,7 +29,7 @@ self.addEventListener("activate", (event) => {
       return Promise.all(
         keys
           .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key)) // 🔥 delete old cache
+          .map(key => caches.delete(key)) 
       );
     })
   );
