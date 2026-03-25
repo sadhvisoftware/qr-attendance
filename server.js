@@ -817,7 +817,7 @@ app.get("/admin/report", async (req, res) => {
         /* 🔥 COLOR HIGHLIGHT */
         let color = "";
 
-        if (status === "Present") color = "FFCCFFCC";     // Green
+        if (status === "Present" || status === "Completed") color = "FFCCFFCC"; 
         if (status === "Absent") color = "FFFF9999";      // Red
         if (status === "Holiday") color = "FFFFFF99";     // Yellow
         if (status === "Half Day") color = "FFFFCC99";    // Orange
