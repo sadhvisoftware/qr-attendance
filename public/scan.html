@@ -159,6 +159,12 @@ if(role === "admin"){
   window.location.href = "admin.html";
 }
 
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(reg => console.log("SW Registered"))
+    .catch(err => console.log("SW Error", err));
+}
+
 let userLat=null;
 let userLng=null;
 let scannerStarted=false;

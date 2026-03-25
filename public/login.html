@@ -78,6 +78,13 @@ if (localStorage.getItem("employee_id")) {
   }
 }
 
+// Register Service Worker
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js")
+    .then(reg => console.log("SW Registered"))
+    .catch(err => console.log("SW Error", err));
+}
+
 /* Show/Hide Password */
 function togglePassword(){
   const pass = document.getElementById("password");
