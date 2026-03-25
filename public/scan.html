@@ -450,6 +450,9 @@ window.onload = () => {
 // Disable OUT button before 7 PM
 function controlOutButton(){
 
+  const outBtn = document.getElementById("outBtn");
+  if(!outBtn) return;
+
   const now = new Date();
 
   const currentTime = now.toLocaleTimeString("en-US", {
@@ -457,20 +460,52 @@ function controlOutButton(){
     hour12: false
   });
 
-  const outBtn = document.getElementById("outBtn");
-  if(!outBtn) return; // safety
-
   const [h, m] = currentTime.split(":").map(Number);
 
-  if(h < 19){
-    outBtn.disabled = true;
-    outBtn.style.opacity = "0.6";
-    outBtn.innerText = "OUT TIME (Available after 7 PM)";
-  } else {
-    outBtn.disabled = false;
-    outBtn.style.opacity = "1";
-    outBtn.innerText = "OUT TIME";
+  // 🔥 GET VALUES FROM UI (already you have these)
+  const workingHoursText = document.getElementById("workingHours")?.innerText || "00:00";
+  const permissionType = document.getElementById("permissionType")?.innerText || "";
+
+  const [wh, wm] = workingHoursText.split(":").map(Number);
+  const totalMinutes = (wh * 60) + wm;
+
+  const minRequired = (7 * 60) + 30; //  change time based on company rule
+
+  /*  CONDITIONS */
+
+  //  After 7 PM → always allow
+  if(h >= 19){
+    enableBtn(outBtn);
+    return;
   }
+
+  // If permission taken → allow
+  if(permissionType === "Permission"){
+    enableBtn(outBtn);
+    return;
+  }
+
+  //  If worked enough hours → allow
+  if(totalMinutes >= minRequired){
+    enableBtn(outBtn);
+    return;
+  }
+
+  //  Otherwise disable
+  disableBtn(outBtn);
+
+}
+
+function enableBtn(btn){
+  btn.disabled = false;
+  btn.style.opacity = "1";
+  btn.innerText = "OUT TIME";
+}
+
+function disableBtn(btn){
+  btn.disabled = true;
+  btn.style.opacity = "0.6";
+  btn.innerText = "Complete minimum working hours";
 }
 
 // Send Attendance Data to Server
