@@ -187,9 +187,71 @@ updateClock();
 
 // Register Service Worker
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js")
-    .then(reg => console.log("SW Registered"))
-    .catch(err => console.log("SW Error", err));
+
+  navigator.serviceWorker.register("/sw.js").then(reg => {
+
+    console.log("✅ SW Registered");
+
+    /* 🔥 UPDATE DETECT */
+    reg.onupdatefound = () => {
+
+      const newWorker = reg.installing;
+
+      newWorker.onstatechange = () => {
+
+        if (newWorker.state === "installed") {
+
+          /* First install ignore */
+          if (!navigator.serviceWorker.controller) return;
+
+          /* 🔥 SHOW POPUP */
+          showUpdatePopup();
+        }
+      };
+    };
+
+  });
+
+}
+
+/* 🔥 POPUP UI FUNCTION */
+function showUpdatePopup(){
+
+  const popup = document.createElement("div");
+
+  popup.innerHTML = `
+    <div style="
+      position:fixed;
+      bottom:20px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#0d6efd;
+      color:white;
+      padding:15px 20px;
+      border-radius:10px;
+      box-shadow:0 5px 15px rgba(0,0,0,0.2);
+      z-index:9999;
+      font-size:14px;
+    ">
+      🔄 New update available
+      <button onclick="updateApp()" style="
+        margin-left:10px;
+        background:white;
+        color:#0d6efd;
+        border:none;
+        padding:5px 10px;
+        border-radius:5px;
+        cursor:pointer;
+      ">Update</button>
+    </div>
+  `;
+
+  document.body.appendChild(popup);
+}
+
+/* 🔥 UPDATE ACTION */
+function updateApp(){
+  window.location.reload();
 }
 
 /* FIXED QR */
