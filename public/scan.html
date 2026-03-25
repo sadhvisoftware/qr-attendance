@@ -153,6 +153,12 @@ padding:12px;
 
 <script>
 
+  const role = localStorage.getItem("role");
+
+if(role === "admin"){
+  window.location.href = "admin.html";
+}
+
 let userLat=null;
 let userLng=null;
 let scannerStarted=false;

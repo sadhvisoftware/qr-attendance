@@ -68,8 +68,14 @@
 <script>
 
 /* Auto redirect if already logged in */
+const role = localStorage.getItem("role");
+
 if (localStorage.getItem("employee_id")) {
-  window.location.href = "scan.html";
+  if (role === "admin") {
+    window.location.href = "admin.html";
+  } else {
+    window.location.href = "scan.html";
+  }
 }
 
 /* Show/Hide Password */
