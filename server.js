@@ -648,6 +648,19 @@ app.get("/admin/report", async (req, res) => {
 
   const { start, end } = req.query;
 
+  /*  TIME FORMAT FUNCTION */
+  function formatTime12hr(time) {
+    if (!time || time === "-") return "-";
+
+    let [h, m] = time.split(":");
+    h = parseInt(h);
+
+    let ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12 || 12;
+
+    return `${h}:${m} ${ampm}`;
+  }
+
   const sql = `
   WITH RECURSIVE dates AS (
     SELECT DATE(?) AS date
@@ -691,7 +704,6 @@ app.get("/admin/report", async (req, res) => {
 
     const workbook = new ExcelJS.Workbook();
 
-    /* GROUP BY EMPLOYEE */
     const employeeMap = {};
 
     rows.forEach(r => {
@@ -705,7 +717,6 @@ app.get("/admin/report", async (req, res) => {
       employeeMap[r.id].data.push(r);
     });
 
-    /* CREATE SHEETS */
     Object.keys(employeeMap).forEach(empId => {
 
       const emp = employeeMap[empId];
@@ -714,18 +725,15 @@ app.get("/admin/report", async (req, res) => {
         `${emp.name}_${empId}`.substring(0, 31)
       );
 
-      /* TITLE */
       sheet.mergeCells("A1:I1");
       sheet.getCell("A1").value = `${emp.name} - Attendance Report`;
       sheet.getCell("A1").font = { size: 16, bold: true };
       sheet.getCell("A1").alignment = { horizontal: "center" };
 
-      /* DATE RANGE */
       sheet.mergeCells("A2:I2");
       sheet.getCell("A2").value = `From ${start} To ${end}`;
       sheet.getCell("A2").alignment = { horizontal: "center" };
 
-      /* HEADER */
       sheet.getRow(3).values = [
         "Date","In Time","Lunch Out","Lunch In","Out Time",
         "Status","Permission","Total Hours","Working Hours"
@@ -743,7 +751,6 @@ app.get("/admin/report", async (req, res) => {
         { key:"working_hours", width:15 }
       ];
 
-      /* HEADER STYLE */
       sheet.getRow(3).eachCell(cell => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
         cell.fill = {
@@ -761,19 +768,14 @@ app.get("/admin/report", async (req, res) => {
         to: 'I3'
       };
 
-      /* 🔥 SUMMARY VARIABLES */
+      /* SUMMARY VARS */
       let totalWorkingDays = 0;
       let totalAbsent = 0;
       let totalHolidays = 0;
-
       let totalWFH = 0;
-      let totalPermissionMinutes = 0;
-
       let totalHalfDay = 0;
-      let totalOvertimeMinutes = 0;
 
-      /* DATA LOOP */
-      emp.data.forEach((r, index) => {
+      emp.data.forEach((r) => {
 
         let formattedDate = "";
 
@@ -789,79 +791,51 @@ app.get("/admin/report", async (req, res) => {
 
         if (r.holiday_reason) status = "Holiday";
         else if (r.attendance_status) status = r.attendance_status;
-        else if (r.in_time) status = "Working";
+        else if (r.in_time) status = "Present";
 
-        /* COUNTING */
-        if (status === "Holiday") {
-          totalHolidays++;
-        } 
-        else if (status === "Absent") {
-          totalAbsent++;
-        } 
-        else {
-          totalWorkingDays++;
-        }
+        /* COUNT */
+        if (status === "Holiday") totalHolidays++;
+        else if (status === "Absent") totalAbsent++;
+        else totalWorkingDays++;
 
-        /* WFH */
-        if (r.attendance_status === "WFH") {
-          totalWFH++;
-        }
+        if (status === "WFH") totalWFH++;
+        if (status === "Half Day") totalHalfDay++;
 
-        /* HALF DAY */
-        if (r.attendance_status === "Half Day") {
-          totalHalfDay++;
-        }
-
-        /* PERMISSION */
-        if (r.permission_time) {
-          const [h, m] = r.permission_time.split(":").map(Number);
-          totalPermissionMinutes += (h * 60) + m;
-        }
-
-        /* OVERTIME */
-        if (r.working_hours) {
-          const [h, m] = r.working_hours.split(":").map(Number);
-          let totalMin = (h * 60) + m;
-
-          const officeMin = (8 * 60) + 30;
-
-          if (totalMin > officeMin) {
-            totalOvertimeMinutes += (totalMin - officeMin);
-          }
-        }
-
-        sheet.addRow({
+        /* ADD ROW */
+        const row = sheet.addRow({
           DATE: formattedDate,
-          in_time: r.in_time || "-",
-          lunch_out: r.lunch_out || "-",
-          lunch_in: r.lunch_in || "-",
-          out_time: r.out_time || "-",
+          in_time: formatTime12hr(r.in_time),
+          lunch_out: formatTime12hr(r.lunch_out),
+          lunch_in: formatTime12hr(r.lunch_in),
+          out_time: formatTime12hr(r.out_time),
           status: status,
           permission_time: r.permission_time || "-",
           total_hours: r.total_hours || "-",
           working_hours: r.working_hours || "-"
         });
 
+        /* 🔥 COLOR HIGHLIGHT */
+        let color = "";
+
+        if (status === "Present") color = "FFCCFFCC";     // Green
+        if (status === "Absent") color = "FFFF9999";      // Red
+        if (status === "Holiday") color = "FFFFFF99";     // Yellow
+        if (status === "Half Day") color = "FFFFCC99";    // Orange
+        if (status === "WFH") color = "FFCCE5FF";         // Blue
+
+        if (color) {
+          row.eachCell(cell => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: color }
+            };
+          });
+        }
+
       });
 
-      /* 🔥 CONVERSIONS */
-
-      let permissionHours = Math.floor(totalPermissionMinutes / 60);
-      let permissionMins = totalPermissionMinutes % 60;
-
-      let totalPermissionTime =
-        String(permissionHours).padStart(2, "0") + ":" +
-        String(permissionMins).padStart(2, "0");
-
-      let overtimeHours = Math.floor(totalOvertimeMinutes / 60);
-      let overtimeMins = totalOvertimeMinutes % 60;
-
-      let totalOvertimeTime =
-        String(overtimeHours).padStart(2, "0") + ":" +
-        String(overtimeMins).padStart(2, "0");
-
       /* SUMMARY */
-
       const lastRow = sheet.lastRow.number + 2;
 
       sheet.getCell(`A${lastRow}`).value = "Summary";
@@ -872,12 +846,8 @@ app.get("/admin/report", async (req, res) => {
       sheet.addRow(["Total Holidays", totalHolidays]);
       sheet.addRow(["Total WFH", totalWFH]);
       sheet.addRow(["Total Half Days", totalHalfDay]);
-      sheet.addRow(["Total Permission Hours", totalPermissionTime]);
-      sheet.addRow(["Total Overtime Hours", totalOvertimeTime]);
 
     });
-
-    /* RESPONSE */
 
     res.setHeader(
       "Content-Type",
