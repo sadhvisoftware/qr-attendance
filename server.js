@@ -473,6 +473,7 @@ a.permission_type
 FROM employees e
 LEFT JOIN attendance a
 ON e.id = a.employee_id AND a.DATE = ?
+WHERE e.role='employee'
 ORDER BY e.NAME ASC
 `;
 

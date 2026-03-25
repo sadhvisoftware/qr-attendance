@@ -6,7 +6,8 @@ const urlsToCache = [
   "/admin.html",
   "/login.html",
   "/logo.png",
-  "/favicon.ico"
+  "/favicon.ico",
+  "/qr.html",
 ];
 
 /* INSTALL */
