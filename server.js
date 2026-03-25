@@ -430,18 +430,21 @@ app.get("/admin/stats",(req,res)=>{
 const today=new Date().toISOString().split("T")[0];
 
 db.query(
-"SELECT COUNT(*) as total FROM employees",
+"SELECT COUNT(*) as total FROM employees WHERE role='employee'",
 (err,total)=>{
 
 db.query(
-"SELECT COUNT(DISTINCT employee_id) as present FROM attendance WHERE DATE=?",
+`SELECT COUNT(DISTINCT a.employee_id) as present
+ FROM attendance a
+ JOIN employees e ON a.employee_id = e.id
+ WHERE a.DATE=? AND e.role='employee'`,
 [today],
 (err,present)=>{
 
 res.json({
 total:total[0].total,
 present:present[0].present,
-absent:total[0].total-present[0].present
+absent:total[0].total - present[0].present
 });
 
 });
