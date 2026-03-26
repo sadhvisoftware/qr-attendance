@@ -103,10 +103,10 @@ padding:12px;
 <!-- 🔥 HEADER -->
 <div class="card-ui d-flex justify-content-between align-items-center mb-3">
 
-  <div>
-    <h5 class="mb-0">📷 Sadhvi Attendance</h5>
-    <small class="text-muted">QR Based Tracking System</small>
-  </div>
+ <div class="d-flex align-items-center gap-2">
+  <img src="/icon-192.png" alt="Logo" style="height:30px;">
+  <h5 class="mb-0">Sadhvi Attendance</h5>
+</div>
 
   <button class="btn btn-outline-danger btn-sm" onclick="logout()">
     🔒 Logout
@@ -309,7 +309,15 @@ if ("serviceWorker" in navigator) {
 // How to Scan FUNCTION
 function toggleGuide(){
   const guide = document.getElementById("scanGuide");
+  const btn = event.target;
+
   guide.classList.toggle("d-none");
+
+  if(guide.classList.contains("d-none")){
+    btn.innerText = "📋 How to Scan";
+  } else {
+    btn.innerText = "❌ Hide Guide";
+  }
 }
 
 /* 🔥 POPUP UI FUNCTION */
@@ -374,7 +382,7 @@ window.location.href="login.html";
 }
 
 document.getElementById("empDetails").innerHTML=
-"👤 "+employeeName+" | 🆔 "+employeeId+" | 🏢 "+employeeDept;
+"👤 "+employeeName+" | 🆔 "+employeeId+" | "+employeeDept;
 
 function updateClock(){
 
