@@ -622,7 +622,8 @@ app.get("/employee/status", (req, res) => {
         in_time: r.in_time,
         lunch_out: r.lunch_out,
         lunch_in: r.lunch_in,
-        out_time: r.out_time
+        out_time: r.out_time,
+        working_hours: r.working_hours,
       });
     }
   );

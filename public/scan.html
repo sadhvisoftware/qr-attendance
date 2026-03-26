@@ -95,18 +95,28 @@ padding:12px;
 </div>
 
 <div class="card-ui text-center">
-  <h6 class="text-muted">Last Scan Details</h6>
+  <h6 class="text-muted">📅 Today's Attendance</h6>
+
+  <!-- 🔥 NEW DATE -->
+  <div id="todayDate" class="fw-bold text-primary mb-2"></div>
+
   <div class="text-start mt-2">
 
-  <div>🟢 IN Time: <span id="inTime">-</span></div>
-  <div>🍽 Lunch Start: <span id="lunchOut">-</span></div>
-  <div>🍽 Lunch End: <span id="lunchIn">-</span></div>
-  <div>🔴 OUT Time: <span id="outTime">-</span></div>
+    <div>🟢 IN Time: <span id="inTime">-</span></div>
+    <div>🍽 Lunch Start: <span id="lunchOut">-</span></div>
+    <div>🍽 Lunch End: <span id="lunchIn">-</span></div>
+    <div>🔴 OUT Time: <span id="outTime">-</span></div>
 
-</div>
+    <hr>
 
-<div id="lastStatus" class="status-text mt-2"></div>
-<div id="lastScanTime" class="text-muted"></div>
+    <div class="fw-bold text-success">
+      ⏱ Total Working: <span id="workingHours">-</span>
+    </div>
+
+  </div>
+
+  <div id="lastStatus" class="status-text mt-3"></div>
+  <div id="lastScanTime" class="text-muted"></div>
 </div>
 
 <div class="card-ui">
@@ -451,16 +461,30 @@ function format12hr(time){
   return `${h}:${m} ${ampm}`;
 }
 
+function formatDate(){
+  const now = new Date();
+
+  return now.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+}
+
 function loadStatus() {
   fetch("/employee/status?employee_id=" + employeeId)
     .then(res => res.json())
     .then(data => {
+
+      // 🔥 SET TODAY'S DATE
+      document.getElementById("todayDate").innerText = formatDate();
 
       // 🔥 SET TIMES
       document.getElementById("inTime").innerText = format12hr(data.in_time);
       document.getElementById("lunchOut").innerText = format12hr(data.lunch_out);
       document.getElementById("lunchIn").innerText = format12hr(data.lunch_in);
       document.getElementById("outTime").innerText = format12hr(data.out_time);
+      document.getElementById("workingHours").innerText = data.working_hours || "-";
 
       // 🔥 STATUS
       const lastStatus = document.getElementById("lastStatus");
