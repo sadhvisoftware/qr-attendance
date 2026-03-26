@@ -194,8 +194,11 @@ padding:12px;
   <div id="lastScanTime" class="text-muted text-center"></div>
 
 </div>
+<button class="btn btn-outline-secondary btn-sm w-100 mb-2" onclick="toggleGuide()">
+📋 How to Scan
+</button>
 
-<div class="card-ui">
+<div id="scanGuide" class="card-ui d-none">
 
   <h6 class="mb-3 text-center">📋 How to Scan</h6>
 
@@ -301,6 +304,12 @@ if ("serviceWorker" in navigator) {
 
   });
 
+}
+
+// How to Scan FUNCTION
+function toggleGuide(){
+  const guide = document.getElementById("scanGuide");
+  guide.classList.toggle("d-none");
 }
 
 /* 🔥 POPUP UI FUNCTION */
