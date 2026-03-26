@@ -937,121 +937,51 @@ app.post("/admin/update-status",(req,res)=>{
 
 let {employee_id,date,status,reason} = req.body;
 
-/* ---------- FIX EMPTY DATE ---------- */
+/* DATE FIX */
+const attendanceDate = date || new Date().toLocaleDateString("en-CA");
 
-let attendanceDate = date;
+/* WFH DEFAULT VALUES */
+let in_time = null;
+let out_time = null;
+let total_hours = null;
+let working_hours = null;
 
-if(!attendanceDate || attendanceDate==="-" || attendanceDate==="0000-00-00"){
-attendanceDate = new Date().toISOString().split("T")[0];
+if(status === "WFH"){
+  in_time = "10:15:00";
+  out_time = "19:15:00";
+  total_hours = "09:00";
+  working_hours = "09:00";
 }
 
-
-/* ---------- CHECK EXISTING RECORD ---------- */
-
-db.query(
-"SELECT * FROM attendance WHERE employee_id=? AND DATE=?",
-[employee_id,attendanceDate],
-(err,result)=>{
-
-if(err) return res.status(500).send("DB Error");
-
-
-/* ---------- IF NO ATTENDANCE RECORD ---------- */
-
-if(result.length===0){
-
-/* ---------- WFH ---------- */
-
-if(status==="WFH"){
-
-db.query(
-`INSERT INTO attendance
-(employee_id,DATE,in_time,out_time,total_hours,working_hours,attendance_status)
-VALUES (?,?,?,?,?,?,?)`,
+db.query(`
+INSERT INTO attendance
+(employee_id, DATE, in_time, out_time, total_hours, working_hours, attendance_status, permission_type)
+VALUES (?,?,?,?,?,?,?,?)
+ON DUPLICATE KEY UPDATE
+attendance_status=VALUES(attendance_status),
+permission_type=VALUES(permission_type),
+in_time=VALUES(in_time),
+out_time=VALUES(out_time),
+total_hours=VALUES(total_hours),
+working_hours=VALUES(working_hours)
+`,
 [
 employee_id,
 attendanceDate,
-"10:15:00",
-"19:15:00",
-"09:00",
-"09:00",
-"WFH"
-],
-()=>res.send("WFH Added")
-);
-
-}
-
-
-/* ---------- OTHER STATUS ---------- */
-
-else{
-
-db.query(
-`INSERT INTO attendance
-(employee_id,DATE,attendance_status,permission_type)
-VALUES (?,?,?,?)`,
-[
-employee_id,
-attendanceDate,
+in_time,
+out_time,
+total_hours,
+working_hours,
 status,
-reason
+reason || null
 ],
-()=>res.send("Status Added")
-);
+(err)=>{
+  if(err){
+    console.log(err);
+    return res.status(500).send("DB Error");
+  }
 
-}
-
-}
-
-
-/* ---------- RECORD EXISTS ---------- */
-
-else{
-
-/* ---------- WFH UPDATE ---------- */
-
-if(status==="WFH"){
-
-db.query(
-`UPDATE attendance
-SET attendance_status='WFH',
-in_time='10:15:00',
-out_time='19:15:00',
-total_hours='09:00',
-working_hours='09:00'
-WHERE employee_id=? AND DATE=?`,
-[
-employee_id,
-attendanceDate
-],
-()=>res.send("WFH Updated")
-);
-
-}
-
-
-/* ---------- OTHER STATUS UPDATE ---------- */
-
-else{
-
-db.query(
-`UPDATE attendance
-SET attendance_status=?, permission_type=?
-WHERE employee_id=? AND DATE=?`,
-[
-status,
-reason,
-employee_id,
-attendanceDate
-],
-()=>res.send("Status Updated")
-);
-
-}
-
-}
-
+  res.send("Status Saved Successfully");
 });
 
 });
