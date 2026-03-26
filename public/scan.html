@@ -88,6 +88,10 @@ padding:12px;
 
 <div id="locationStatus" class="mt-1"></div>
 
+<button class="btn btn-outline-primary btn-sm mt-2" onclick="refreshLocation()">
+📍 Refresh Location
+</button>
+
 </div>
 
 <div class="card-ui text-center">
@@ -299,6 +303,45 @@ Math.sin(Δλ/2)*Math.sin(Δλ/2);
 const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
 
 return R*c;
+
+}
+
+// refresh location on click
+function refreshLocation(){
+
+  if(!navigator.geolocation){
+    alert("Geolocation not supported");
+    return;
+  }
+
+  document.getElementById("locationStatus").innerHTML =
+  "<span class='text-warning'>🔄 Refreshing location...</span>";
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(pos){
+
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+
+      document.getElementById("locationStatus").innerHTML =
+      "<span class='location-ok'>📍 Location Updated</span>";
+
+    },
+
+    function(err){
+
+      document.getElementById("locationStatus").innerHTML =
+      "<span class='location-off'>❌ Unable to fetch location</span>";
+
+    },
+
+    {
+      enableHighAccuracy:true,
+      timeout:10000
+    }
+
+  );
 
 }
 
