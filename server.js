@@ -65,12 +65,13 @@ return toHHMM(working);
 
 /* ---------------- OFFICE TIMES ---------------- */
 
-const officeStart = "10:30:00";
+const officeStart = "10:15:00";
 const lateLimit = "12:30:00";
 const halfDayLimit = "14:00:00";
 
 const lunchStart = "13:00:00";
 const lunchEnd = "15:00:00";
+const officeEnd = "19:15:00";
 
 
 /* ---------------- LOGIN ---------------- */
@@ -970,10 +971,10 @@ VALUES (?,?,?,?,?,?,?)`,
 [
 employee_id,
 attendanceDate,
-"10:30:00",
-"19:00:00",
-"08:30",
-"08:30",
+"10:15:00",
+"19:15:00",
+"09:00",
+"09:00",
 "WFH"
 ],
 ()=>res.send("WFH Added")
@@ -1015,10 +1016,10 @@ if(status==="WFH"){
 db.query(
 `UPDATE attendance
 SET attendance_status='WFH',
-in_time='10:30:00',
-out_time='19:00:00',
-total_hours='08:30',
-working_hours='08:30'
+in_time='10:15:00',
+out_time='19:15:00',
+total_hours='09:00',
+working_hours='09:00'
 WHERE employee_id=? AND DATE=?`,
 [
 employee_id,
@@ -1112,6 +1113,12 @@ permission_time,
 attendance_status
 } = req.body;
 
+/* 🔥 SAFETY LOG */
+console.log("UPDATE ATTENDANCE:", req.body);
+
+/* 🔥 DATE FIX (IST SAFE) */
+const attendanceDate = date || new Date().toLocaleDateString("en-CA");
+
 db.query(`
 INSERT INTO attendance
 (employee_id, DATE, in_time, lunch_out, lunch_in, out_time, permission_type, permission_time, attendance_status)
@@ -1127,7 +1134,7 @@ attendance_status=VALUES(attendance_status)
 `,
 [
 employee_id,
-date,
+attendanceDate,
 in_time || null,
 lunch_out || null,
 lunch_in || null,
@@ -1136,14 +1143,22 @@ permission_type || null,
 permission_time || null,
 attendance_status || null
 ],
-(err)=>{
+(err,result)=>{
   if(err){
-    console.log(err);
-    return res.send("DB Error");
+    console.log("DB ERROR:", err);
+    return res.status(500).json({success:false});
   }
 
-  res.send("Attendance Saved Successfully");
+  /* 🔥 CHECK INSERT or UPDATE */
+  const action = result.affectedRows === 1 ? "INSERTED" : "UPDATED";
+
+  res.json({
+    success:true,
+    message:`Attendance ${action}`
+  });
 });
 
 });
+
+
 
