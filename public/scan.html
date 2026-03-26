@@ -96,8 +96,17 @@ padding:12px;
 
 <div class="card-ui text-center">
   <h6 class="text-muted">Last Scan Details</h6>
-  <div id="lastStatus" class="status-text">Loading...</div>
-  <div id="lastScanTime" class="text-muted mt-2"></div>
+  <div class="text-start mt-2">
+
+  <div>🟢 IN Time: <span id="inTime">-</span></div>
+  <div>🍽 Lunch Start: <span id="lunchOut">-</span></div>
+  <div>🍽 Lunch End: <span id="lunchIn">-</span></div>
+  <div>🔴 OUT Time: <span id="outTime">-</span></div>
+
+</div>
+
+<div id="lastStatus" class="status-text mt-2"></div>
+<div id="lastScanTime" class="text-muted"></div>
 </div>
 
 <div class="card-ui">
@@ -430,20 +439,41 @@ function updateLastStatus(msg) {
   timeBox.innerText = "Last Scan Time: " + now;
 }
 
+function format12hr(time){
+  if(!time) return "-";
+
+  let [h,m] = time.split(":");
+  h = parseInt(h);
+
+  let ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12 || 12;
+
+  return `${h}:${m} ${ampm}`;
+}
+
 function loadStatus() {
   fetch("/employee/status?employee_id=" + employeeId)
     .then(res => res.json())
     .then(data => {
+
+      // 🔥 SET TIMES
+      document.getElementById("inTime").innerText = format12hr(data.in_time);
+      document.getElementById("lunchOut").innerText = format12hr(data.lunch_out);
+      document.getElementById("lunchIn").innerText = format12hr(data.lunch_in);
+      document.getElementById("outTime").innerText = format12hr(data.out_time);
+
+      // 🔥 STATUS
       const lastStatus = document.getElementById("lastStatus");
       const lastScanTime = document.getElementById("lastScanTime");
 
       lastStatus.innerText = data.last_scan_type || data.status || "NOT MARKED";
 
       if (data.last_scan_time) {
-        lastScanTime.innerText = "Last Scan Time: " + data.last_scan_time;
+        lastScanTime.innerText = "Last Scan Time: " + format12hr(data.last_scan_time);
       } else {
         lastScanTime.innerText = "Last Scan Time: -";
       }
+
     });
 }
 
@@ -491,7 +521,7 @@ window.onload = () => {
 };
 
 // Disable OUT button before 7 PM
-function controlOutButton(){
+async function controlOutButton(){
 
   const outBtn = document.getElementById("outBtn");
   if(!outBtn) return;
@@ -502,21 +532,22 @@ function controlOutButton(){
     now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
   );
 
-  const permissionType = document.getElementById("permissionType")?.innerText || "";
+  // 🔥 GET DATA FROM API
+  const res = await fetch(`/employee/status?employee_id=${employeeId}`);
+  const data = await res.json();
 
-  // 🔥 GET TIMES FROM UI
-  const inTimeText = document.getElementById("inTime")?.innerText;
-  const lunchOutText = document.getElementById("lunchOut")?.innerText;
-  const lunchInText = document.getElementById("lunchIn")?.innerText;
+  const inTimeText = data.in_time;
+  const lunchOutText = data.lunch_out;
+  const lunchInText = data.lunch_in;
+  const permissionType = data.permission_type;
 
-  if(!inTimeText || inTimeText === "-"){
+  if(!inTimeText){
     disableBtn(outBtn);
     return;
   }
 
-  // 🔥 convert to Date
   function parseTime(t){
-    return new Date(`1970-01-01 ${t}`);
+    return new Date(`1970-01-01T${t}`);
   }
 
   const inTime = parseTime(inTimeText);
@@ -524,7 +555,7 @@ function controlOutButton(){
   let workedMinutes = 0;
 
   // before lunch
-  if(lunchOutText && lunchOutText !== "-"){
+  if(lunchOutText){
     const lunchOut = parseTime(lunchOutText);
     workedMinutes += (lunchOut - inTime) / 60000;
   } else {
@@ -532,30 +563,26 @@ function controlOutButton(){
   }
 
   // after lunch
-  if(lunchInText && lunchInText !== "-"){
+  if(lunchInText){
     const lunchIn = parseTime(lunchInText);
     workedMinutes += (currentTime - lunchIn) / 60000;
   }
 
-  const minRequired = 7.5 * 60; // 7h 30m
+  const minRequired = 7.5 * 60;
 
   const currentHour = currentTime.getHours();
 
-  /* CONDITIONS */
-
-  // after 7 PM
+  // CONDITIONS
   if(currentHour >= 19){
     enableBtn(outBtn);
     return;
   }
 
-  // permission
   if(permissionType === "Permission"){
     enableBtn(outBtn);
     return;
   }
 
-  // enough work
   if(workedMinutes >= minRequired){
     enableBtn(outBtn);
     return;

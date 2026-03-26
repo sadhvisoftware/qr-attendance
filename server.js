@@ -128,6 +128,21 @@ db.query(
 if(err) return res.status(500).send("DB Error");
 
 
+/* ---------------- HELPER FUNCTIONS ---------------- */
+
+function addTime(t1,t2){
+  const [h1,m1] = t1.split(":").map(Number);
+  const [h2,m2] = t2.split(":").map(Number);
+
+  let total = (h1*60+m1) + (h2*60+m2);
+
+  let h = Math.floor(total/60);
+  let m = total%60;
+
+  return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");
+}
+
+
 /* ---------------- IN TIME ---------------- */
 
 if(type==="IN"){
@@ -140,17 +155,19 @@ let permissionType=null;
 let permissionTime=null;
 let status="Present";
 
-if(currentTime <= "10:30:00"){
+/* 🔥 UPDATED TIME → 10:15 */
+
+if(currentTime <= "10:15:00"){
 
 status="Present";
 
 }
 
-else if(currentTime > "10:30:00" && currentTime <= "12:30:00"){
+else if(currentTime > "10:15:00" && currentTime <= "12:30:00"){
 
 status="Present";
 permissionType="Late Entry";
-permissionTime=timeDiff("10:30:00",currentTime);
+permissionTime=timeDiff("10:15:00",currentTime);
 
 }
 
@@ -260,11 +277,9 @@ if(r.out_time){
 return res.send("Day already closed");
 }
 
-/* current time detect */
-
 let permissionStart=currentTime;
 
-/* calculate work until permission */
+/* total work till permission */
 
 let totalHours=timeDiff(r.in_time,permissionStart);
 
@@ -276,9 +291,9 @@ breakTime=timeDiff(r.lunch_out,r.lunch_in);
 
 let workingHours=calcWorking(totalHours,breakTime);
 
-/* permission hours */
+/* permission till 7:15 PM */
 
-let permissionTime=timeDiff(permissionStart,"19:00:00");
+let permissionTime=timeDiff(permissionStart,"19:15:00");
 
 db.query(
 `UPDATE attendance
@@ -328,14 +343,27 @@ breakTime=timeDiff(r.lunch_out,r.lunch_in);
 
 let workingHours=calcWorking(totalHours,breakTime);
 
+/* 🔥 ADD PERMISSION HOURS */
+let permissionTime = r.permission_time || "00:00";
+workingHours = addTime(workingHours, permissionTime);
+
+/* 🔥 HANDLE EARLY OUT + LOW HOURS */
+
+let status="Completed";
+
+if(workingHours < "04:00"){
+status="Half Day";
+}
+
 db.query(
 `UPDATE attendance
-SET out_time=?, total_hours=?, working_hours=?, attendance_status='Completed'
+SET out_time=?, total_hours=?, working_hours=?, attendance_status=?
 WHERE id=?`,
 [
 currentTime,
 totalHours,
 workingHours,
+status,
 r.id
 ],
 ()=>res.send("OUT Time Marked")
@@ -343,7 +371,6 @@ r.id
 
 return;
 }
-
 
 });
 });
@@ -591,7 +618,11 @@ app.get("/employee/status", (req, res) => {
       res.json({
         status,
         last_scan_type,
-        last_scan_time
+        last_scan_time,
+        in_time: r.in_time,
+        lunch_out: r.lunch_out,
+        lunch_in: r.lunch_in,
+        out_time: r.out_time
       });
     }
   );
