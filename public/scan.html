@@ -74,6 +74,24 @@ padding:12px;
   font-weight: 600;
 }
 
+.card-ui h5 {
+  font-weight: 600;
+}
+
+#clock {
+  font-size: 14px;
+}
+
+.table td {
+  font-size: 14px;
+}
+
+.table th {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+
 </style>
 
 </head>
@@ -82,25 +100,51 @@ padding:12px;
 
 <div class="container mt-4">
 
-<div class="d-flex justify-content-between align-items-center mb-3">
+<!-- 🔥 HEADER -->
+<div class="card-ui d-flex justify-content-between align-items-center mb-3">
 
-<h3>📷 SADHVI ATTENDANCE</h3>
+  <div>
+    <h5 class="mb-0">📷 Sadhvi Attendance</h5>
+    <small class="text-muted">QR Based Tracking System</small>
+  </div>
 
-<button class="btn btn-danger" onclick="logout()">Logout</button>
+  <button class="btn btn-outline-danger btn-sm" onclick="logout()">
+    🔒 Logout
+  </button>
 
 </div>
 
+
+<!-- 🔥 EMPLOYEE INFO CARD -->
 <div class="card-ui">
 
-<h5 id="empDetails"></h5>
+  <!-- 👤 Employee -->
+  <div class="d-flex align-items-center justify-content-between mb-2">
 
-<div id="clock" class="text-muted"></div>
+    <div>
+      <h6 id="empDetails" class="mb-0 fw-bold"></h6>
+      <small class="text-muted">Employee Details</small>
+    </div>
 
-<div id="locationStatus" class="mt-1"></div>
+    <div class="text-end">
+      <div id="clock" class="fw-bold text-primary"></div>
+      <small class="text-muted">Current Time</small>
+    </div>
 
-<button class="btn btn-outline-primary btn-sm mt-2" onclick="refreshLocation()">
-📍 Refresh Location
-</button>
+  </div>
+
+  <hr>
+
+  <!-- 📍 LOCATION -->
+  <div class="d-flex justify-content-between align-items-center">
+
+    <div id="locationStatus" class="fw-medium"></div>
+
+    <button class="btn btn-outline-primary btn-sm" onclick="refreshLocation()">
+      📍 Refresh
+    </button>
+
+  </div>
 
 </div>
 
@@ -153,54 +197,71 @@ padding:12px;
 
 <div class="card-ui">
 
-<h5 class="mb-3">📋 How to Scan Attendance</h5>
+  <h6 class="mb-3 text-center">📋 How to Scan</h6>
 
-<ol class="mb-0">
+  <ul class="list-group list-group-flush text-start">
 
-<li>Enable <b>Location (GPS)</b></li>
-<li>Click <b>Start QR Scan</b></li>
-<li>Allow <b>Camera permission</b></li>
-<li>Scan the <b>Office QR Code</b></li>
-<li>Wait for <b>Success message</b></li>
+    <li class="list-group-item">📍 Enable <b>Location (GPS)</b></li>
+    <li class="list-group-item">▶ Click <b>Start Scan</b></li>
+    <li class="list-group-item">📷 Allow <b>Camera Permission</b></li>
+    <li class="list-group-item">🔳 Scan <b>Office QR Code</b></li>
+    <li class="list-group-item">✅ Wait for <b>Success Message</b></li>
 
-</ol>
+  </ul>
 
 </div>
 
-<div id="successBox" class="alert alert-success d-none"></div>
 
+<!-- 🔥 SUCCESS MESSAGE -->
+<div id="successBox" class="alert alert-success d-none text-center fw-bold"></div>
+
+
+<!-- 🔥 SCAN BUTTON -->
 <div class="card-ui text-center">
 
-<button class="btn btn-primary scan-btn" onclick="startScanner()">
-▶ Start QR Scan
-</button>
+  <button class="btn btn-primary scan-btn w-100" onclick="startScanner()">
+    ▶ Start QR Scan
+  </button>
+
+  <small class="text-muted d-block mt-2">
+    Make sure GPS & Camera are enabled
+  </small>
 
 </div>
 
-<div class="scan-box">
 
-<div id="reader"></div>
+<!-- 🔥 SCAN BOX -->
+<div class="card-ui text-center">
+
+  <h6 class="mb-2 text-muted">📷 Scanner</h6>
+
+  <div id="reader" style="margin:auto;"></div>
 
 </div>
 
 <div class="card-ui">
 
-<h5 class="mb-3">📅 Upcoming Holidays</h5>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="mb-0">📅 Upcoming Holidays</h6>
+    
+  </div>
 
-<table class="table table-bordered">
+  <div class="table-responsive">
 
-<thead class="table-dark">
+    <table class="table align-middle mb-0">
 
-<tr>
-<th>Date</th>
-<th>Reason</th>
-</tr>
+      <thead class="table-light">
+        <tr>
+          <th>📆 Date</th>
+          <th>🎉 Reason</th>
+        </tr>
+      </thead>
 
-</thead>
+      <tbody id="holidayTable"></tbody>
 
-<tbody id="holidayTable"></tbody>
+    </table>
 
-</table>
+  </div>
 
 </div>
 
