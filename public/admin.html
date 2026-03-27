@@ -356,7 +356,10 @@ function formatDuration(time){
 
   const [h,m] = time.split(":").map(Number);
 
-  return `${h} hr${h !== 1 ? "s" : ""} ${m} min`;
+  if(h === 0) return `${m} min`;
+if(m === 0) return `${h} hr${h !== 1 ? "s" : ""}`;
+
+return `${h} hr${h !== 1 ? "s" : ""} ${m} min`;
 }
 
 function formatTime(time){
