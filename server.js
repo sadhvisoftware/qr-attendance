@@ -351,11 +351,19 @@ if(r.lunch_out && r.lunch_in){
 breakTime=timeDiff(r.lunch_out,r.lunch_in);
 }
 
-let workingHours=calcWorking(totalHours,breakTime);
+let workingHours = calcWorking(totalHours, breakTime);
 
-/* 🔥 ADD PERMISSION HOURS */
+/* 🔥 SUBTRACT PERMISSION */
 let permissionTime = r.permission_time || "00:00";
-workingHours = addTime(workingHours, permissionTime);
+
+let workingMin = toMinutes(workingHours);
+let permissionMin = toMinutes(permissionTime);
+
+let finalWorking = workingMin - permissionMin;
+
+if(finalWorking < 0) finalWorking = 0;
+
+workingHours = toHHMM(finalWorking);
 
 /* 🔥 HANDLE EARLY OUT + LOW HOURS */
 
@@ -1170,28 +1178,4 @@ attendance_status || null
   });
 });
 
-});
-
-
-// PASSWORD MIGRATION (PLAIN → HASHED)
-
-
-db.query("SELECT * FROM employees", async (err, rows) => {
-
-for (let user of rows) {
-
-  if(!user.password.startsWith("$2b$")){
-
-    const hashed = await bcrypt.hash(user.password, 10);
-
-    db.query(
-      "UPDATE employees SET password=? WHERE id=?",
-      [hashed, user.id]
-    );
-
-  }
-
-}
-
-console.log("Password migration done");
 });

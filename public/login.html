@@ -144,7 +144,12 @@ function showUpdatePopup(){
 
 /* 🔥 UPDATE ACTION */
 function updateApp(){
-  window.location.reload();
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.waiting?.postMessage({ type: "SKIP_WAITING" }));
+    });
+  }
+  window.location.reload(true);
 }
 
 /* Show/Hide Password */
