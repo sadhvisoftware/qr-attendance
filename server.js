@@ -76,11 +76,13 @@ const officeEnd = "19:15:00";
 
 /* ---------------- LOGIN ---------------- */
 
+const bcrypt = require("bcrypt");
+
 app.post("/login",(req,res)=>{
 
 const {email,password}=req.body;
 
-/* 1️⃣ Check email first */
+/* 1️⃣ Check email */
 const sql="SELECT * FROM employees WHERE email=?";
 
 db.query(sql,[email],(err,result)=>{
@@ -94,8 +96,13 @@ return res.json({error:"Email not registered"});
 
 const user=result[0];
 
-/* ❌ Password wrong */
-if(user.password !== password){
+/* 🔥 COMPARE HASHED PASSWORD */
+bcrypt.compare(password, user.password, (err, isMatch) => {
+
+if(err) return res.status(500).send("Error");
+
+/* ❌ Wrong password */
+if(!isMatch){
 return res.json({error:"Incorrect password"});
 }
 
@@ -105,6 +112,8 @@ employee_id:user.id,
 name:user.NAME,
 department:user.department,
 role:user.role
+});
+
 });
 
 });
@@ -632,13 +641,24 @@ app.get("/employee/status", (req, res) => {
 
 
 /* ---------------- ADD EMPLOYEE ---------------- */
+const bcrypt = require("bcrypt");
+
 app.post("/admin/add-employee",(req,res)=>{
 
 const {name,email,password,department}=req.body;
 
+/* 🔒 HASH PASSWORD */
+bcrypt.hash(password, 10, (err, hash) => {
+
+if(err){
+  console.log(err);
+  return res.status(500).send("Hash Error");
+}
+
 db.query(
 "INSERT INTO employees(NAME,department,email,password,role) VALUES(?,?,?,?,?)",
-[name,department,email,password,"employee"],
+[name,department,email,hash,"employee"],
+
 (err)=>{
 
 if(err){
@@ -647,6 +667,8 @@ return res.status(500).send("DB Error");
 }
 
 res.send("Employee Added");
+
+});
 
 });
 
@@ -1151,4 +1173,25 @@ attendance_status || null
 });
 
 
+// PASSWORD MIGRATION (PLAIN → HASHED)
+const bcrypt = require("bcrypt");
 
+db.query("SELECT * FROM employees", async (err, rows) => {
+
+for (let user of rows) {
+
+  if(!user.password.startsWith("$2b$")){
+
+    const hashed = await bcrypt.hash(user.password, 10);
+
+    db.query(
+      "UPDATE employees SET password=? WHERE id=?",
+      [hashed, user.id]
+    );
+
+  }
+
+}
+
+console.log("Password migration done");
+});
