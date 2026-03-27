@@ -201,6 +201,51 @@ font-weight:700;
 color:#059669;
 }
 
+/* OVERLAY */
+.popup-overlay{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+backdrop-filter: blur(5px);
+}
+
+/* CARD */
+.popup-card{
+background:white;
+padding:20px;
+border-radius:16px;
+width:90%;
+max-width:320px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+animation: popupFade 0.3s ease;
+}
+
+/* BUTTON STYLE */
+.popup-btn{
+border-radius:10px;
+padding:10px;
+font-weight:500;
+}
+
+/* ANIMATION */
+@keyframes popupFade{
+from{
+transform:translateY(20px);
+opacity:0;
+}
+to{
+transform:translateY(0);
+opacity:1;
+}
+}
+
 </style>
 
 </head>
@@ -419,6 +464,10 @@ function enableBtn(btn){
   btn.style.opacity = "1";
 }
 
+// CLOSE POPUP
+function closePopup(){
+  document.getElementById("actionPopup").style.display = "none";
+}
 
 // How to Scan FUNCTION
 function toggleGuide(){
@@ -875,50 +924,43 @@ location.reload();
 </script>
 <!-- ACTION POPUP -->
 
-<div id="actionPopup" style="
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,0.5);
-display:none;
-align-items:center;
-justify-content:center;
-z-index:9999;
-">
+<div id="actionPopup" class="popup-overlay">
 
-<div style="
-background:white;
-padding:25px;
-border-radius:10px;
-width:300px;
-text-align:center;
-">
+  <div class="popup-card">
 
-<h5 class="mb-3">Select Attendance</h5>
+    <h5 class="mb-3 text-center">Select Attendance</h5>
 
-<button class="btn btn-success w-100 mb-2" onclick="sendAttendance('IN')">
-IN TIME
-</button>
+    <div class="d-grid gap-2">
 
-<button class="btn btn-warning w-100 mb-2" onclick="sendAttendance('LUNCH_OUT')">
-Lunch Start
-</button>
+      <button class="btn btn-success popup-btn" onclick="sendAttendance('IN')">
+        🟢 IN TIME
+      </button>
 
-<button class="btn btn-info w-100 mb-2" onclick="sendAttendance('LUNCH_IN')">
-Lunch End
-</button>
+      <button class="btn btn-warning popup-btn" onclick="sendAttendance('LUNCH_OUT')">
+        🍴 Lunch Start
+      </button>
 
-<button class="btn btn-secondary w-100 mb-2" onclick="sendAttendance('PERMISSION')">
-Afternoon Permission
-</button>
+      <button class="btn btn-info popup-btn" onclick="sendAttendance('LUNCH_IN')">
+        🔙 Lunch End
+      </button>
 
-<button id="outBtn" class="btn btn-danger w-100" onclick="sendAttendance('OUT')">
-OUT TIME
-</button>
+      <button class="btn btn-secondary popup-btn" onclick="sendAttendance('PERMISSION')">
+        ⏳ Afternoon Permission
+      </button>
 
-</div>
+      <button id="outBtn" class="btn btn-danger popup-btn" onclick="sendAttendance('OUT')">
+        🔴 OUT TIME
+      </button>
+
+    </div>
+
+    <!-- CANCEL BUTTON -->
+    <button class="btn btn-light w-100 mt-3" onclick="closePopup()">
+      ❌ Cancel
+    </button>
+
+  </div>
+
 </div>
 </body>
 </html>
