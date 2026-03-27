@@ -31,7 +31,7 @@ let diff=endTime-startTime;
 
 if(diff<0) diff=0;
 
-let totalMinutes=Math.round(diff/60000)
+let totalMinutes=Math.floor(diff/60000)
 
 let h=Math.floor(totalMinutes/60);
 let m=totalMinutes%60;
@@ -352,7 +352,7 @@ workingHours = addTime(workingHours, permissionTime);
 
 let status="Completed";
 
-if(workingHours < "04:00"){
+if(toMinutes(workingHours) < 240){
 status="Half Day";
 }
 

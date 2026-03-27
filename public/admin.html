@@ -24,8 +24,24 @@ font-weight:600;
 
 .card{
 border:none;
-border-radius:12px;
-box-shadow:0 4px 15px rgba(0,0,0,0.08);
+border-radius:16px;
+box-shadow:0 8px 25px rgba(0,0,0,0.08);
+transition:0.2s;
+}
+
+.card:hover{
+transform:translateY(-3px);
+}
+
+thead th{
+position:sticky;
+top:0;
+z-index:2;
+}
+
+.btn{
+border-radius:10px;
+font-weight:500;
 }
 
 .stat{
@@ -45,6 +61,11 @@ border-radius:10px;
 
 .table tbody tr:hover{
 background:#f1f5ff;
+}
+
+.bg-purple{
+  background:#7b2ff7;
+  color:white;
 }
 
 </style>
@@ -383,31 +404,22 @@ data.forEach(row=>{
 let status="Absent";
 let badge="badge bg-danger";
 
-/* Holiday */
 if(row.holiday_reason){
   status="Holiday";
-  badge="badge bg-warning";
+  badge="badge bg-warning text-dark";
 }
-
-/* Permission FIRST CHECK */
 else if(row.attendance_status === "Permission"){
   status="Permission";
-  badge="badge bg-secondary"; // or purple custom
+  badge="badge bg-purple";
 }
-
-/* WFH */
 else if(row.attendance_status==="WFH"){
   status="WFH";
   badge="badge bg-primary";
 }
-
-/* Working */
 else if(row.in_time && !row.out_time){
   status="Working";
-  badge="badge bg-info";
+  badge="badge bg-info text-dark";
 }
-
-/* Completed */
 else if(row.out_time){
   status="Completed";
   badge="badge bg-success";
@@ -432,13 +444,25 @@ const tr=`
 
 <td>${formatTime(row.out_time)}</td>
 
-<td>${row.permission_type || "-"}</td>
+<td>
+  ${row.permission_type === "Late Entry"
+    ? `<span class="badge bg-danger">Late</span>`
+    : (row.permission_type || "-")}
+</td>
 
-<td>${row.permission_time || "-"}</td>
+<td>
+  ${row.permission_time 
+    ? `<span class="badge bg-warning text-dark">${row.permission_time}</span>` 
+    : "-"}
+</td>
 
 <td>${row.total_hours || "-"}</td>
 
-<td>${row.working_hours || "-"}</td>
+<td>
+  <span class="badge bg-dark">
+    ${row.working_hours || "-"}
+  </span>
+</td>
 
 <td><span class="${badge}">${status}</span></td>
 
