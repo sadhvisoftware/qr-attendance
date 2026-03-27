@@ -68,6 +68,49 @@ background:#f1f5ff;
   color:white;
 }
 
+.update-popup{
+position:fixed;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+background:#0d6efd;
+color:white;
+padding:12px 18px;
+border-radius:12px;
+box-shadow:0 5px 20px rgba(0,0,0,0.2);
+display:flex;
+align-items:center;
+gap:10px;
+z-index:9999;
+font-size:14px;
+animation:fadeUp 0.3s ease;
+}
+
+.update-popup button{
+background:white;
+color:#0d6efd;
+border:none;
+padding:5px 12px;
+border-radius:6px;
+cursor:pointer;
+font-weight:500;
+}
+
+.d-none{
+display:none !important;
+}
+
+@keyframes fadeUp{
+from{
+opacity:0;
+transform:translate(-50%,20px);
+}
+to{
+opacity:1;
+transform:translate(-50%,0);
+}
+}
+
 </style>
 
 </head>
@@ -282,38 +325,23 @@ function openQR(){
 }
 
 /* 🔥 POPUP UI FUNCTION */
+/* SHOW POPUP */
 function showUpdatePopup(){
+  const popup = document.getElementById("updatePopup");
+  if(popup){
+    popup.classList.remove("d-none");
+  }
+}
 
-  const popup = document.createElement("div");
+/* UPDATE APP (force refresh properly) */
+function updateApp(){
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(reg => reg.waiting?.postMessage({ type: "SKIP_WAITING" }));
+    });
+  }
 
-  popup.innerHTML = `
-    <div style="
-      position:fixed;
-      bottom:20px;
-      left:50%;
-      transform:translateX(-50%);
-      background:#0d6efd;
-      color:white;
-      padding:15px 20px;
-      border-radius:10px;
-      box-shadow:0 5px 15px rgba(0,0,0,0.2);
-      z-index:9999;
-      font-size:14px;
-    ">
-      🔄 New update available
-      <button onclick="updateApp()" style="
-        margin-left:10px;
-        background:white;
-        color:#0d6efd;
-        border:none;
-        padding:5px 10px;
-        border-radius:5px;
-        cursor:pointer;
-      ">Update</button>
-    </div>
-  `;
-
-  document.body.appendChild(popup);
+  window.location.reload(true);
 }
 
 /* 🔥 UPDATE ACTION */
@@ -812,6 +840,11 @@ loadStats();
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<div id="updatePopup" class="update-popup d-none">
+  <span>🔄 New update available</span>
+  <button onclick="updateApp()">Update</button>
+</div>
 
 </body>
 </html>

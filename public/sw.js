@@ -1,4 +1,4 @@
-const CACHE_NAME = "qr-attendance-v1.2.8"; 
+const CACHE_NAME = "qr-attendance-v1.3.0"; // 🔥 version updated
 
 const urlsToCache = [
   "/",
@@ -8,6 +8,9 @@ const urlsToCache = [
   "/logo.png",
   "/favicon.ico",
   "/qr.html",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/manifest.json"
 ];
 
 /* INSTALL */
@@ -30,7 +33,7 @@ self.addEventListener("activate", (event) => {
       return Promise.all(
         keys
           .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key)) 
+          .map(key => caches.delete(key))
       );
     })
   );
@@ -38,12 +41,23 @@ self.addEventListener("activate", (event) => {
   return self.clients.claim();
 });
 
-/* FETCH */
+/* FETCH - NETWORK FIRST (UPDATED) */
 self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request)
+    fetch(event.request)
       .then(response => {
-        return response || fetch(event.request);
+        return caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, response.clone());
+          return response;
+        });
       })
+      .catch(() => caches.match(event.request))
   );
+});
+
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
