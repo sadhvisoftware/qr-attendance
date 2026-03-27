@@ -641,7 +641,7 @@ app.get("/employee/status", (req, res) => {
 
 
 /* ---------------- ADD EMPLOYEE ---------------- */
-const bcrypt = require("bcrypt");
+
 
 app.post("/admin/add-employee",(req,res)=>{
 
@@ -1174,7 +1174,7 @@ attendance_status || null
 
 
 // PASSWORD MIGRATION (PLAIN → HASHED)
-const bcrypt = require("bcrypt");
+
 
 db.query("SELECT * FROM employees", async (err, rows) => {
 
