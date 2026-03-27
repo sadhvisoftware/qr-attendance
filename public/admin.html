@@ -350,6 +350,15 @@ localStorage.clear();
 window.location.href="login.html";
 }
 
+
+function formatDuration(time){
+  if(!time || time === "-") return "-";
+
+  const [h,m] = time.split(":").map(Number);
+
+  return `${h} hr${h !== 1 ? "s" : ""} ${m} min`;
+}
+
 function formatTime(time){
 
 if(!time) return "-";
@@ -452,15 +461,19 @@ const tr=`
 
 <td>
   ${row.permission_time 
-    ? `<span class="badge bg-warning text-dark">${row.permission_time}</span>` 
-    : "-"}
+  ? `<span class="badge bg-warning text-dark">${formatDuration(row.permission_time)}</span>` 
+  : "-"}
 </td>
-
-<td>${row.total_hours || "-"}</td>
 
 <td>
   <span class="badge bg-dark">
-    ${row.working_hours || "-"}
+    ${formatDuration(row.total_hours)}
+  </span>
+</td>
+
+<td>
+  <span class="badge bg-dark">
+    ${formatDuration(row.working_hours)}
   </span>
 </td>
 
