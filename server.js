@@ -674,7 +674,7 @@ app.get("/admin/report", async (req, res) => {
 
   const { start, end } = req.query;
 
-  /*  TIME FORMAT FUNCTION */
+  /* ---------- TIME FORMAT (AM/PM) ---------- */
   function formatTime12hr(time) {
     if (!time || time === "-") return "-";
 
@@ -685,6 +685,18 @@ app.get("/admin/report", async (req, res) => {
     h = h % 12 || 12;
 
     return `${h}:${m} ${ampm}`;
+  }
+
+  /* ---------- DURATION FORMAT ---------- */
+  function formatDuration(time){
+    if(!time || time === "-") return "-";
+
+    const [h,m] = time.split(":").map(Number);
+
+    if(h === 0) return `${m} min`;
+    if(m === 0) return `${h} hr${h !== 1 ? "s" : ""}`;
+
+    return `${h} hr${h !== 1 ? "s" : ""} ${m} min`;
   }
 
   const sql = `
@@ -729,7 +741,6 @@ app.get("/admin/report", async (req, res) => {
     if (err) return res.status(500).send("DB Error");
 
     const workbook = new ExcelJS.Workbook();
-
     const employeeMap = {};
 
     rows.forEach(r => {
@@ -751,30 +762,32 @@ app.get("/admin/report", async (req, res) => {
         `${emp.name}_${empId}`.substring(0, 31)
       );
 
+      /* ---------- TITLE ---------- */
       sheet.mergeCells("A1:I1");
       sheet.getCell("A1").value = `${emp.name} - Attendance Report`;
-      sheet.getCell("A1").font = { size: 16, bold: true };
+      sheet.getCell("A1").font = { size: 18, bold: true, color: { argb: "FF1F4E78" } };
       sheet.getCell("A1").alignment = { horizontal: "center" };
 
       sheet.mergeCells("A2:I2");
-      sheet.getCell("A2").value = `From ${start} To ${end}`;
+      sheet.getCell("A2").value = `📅 From ${start} To ${end}`;
       sheet.getCell("A2").alignment = { horizontal: "center" };
 
+      /* ---------- HEADER ---------- */
       sheet.getRow(3).values = [
         "Date","In Time","Lunch Out","Lunch In","Out Time",
         "Status","Permission","Total Hours","Working Hours"
       ];
 
       sheet.columns = [
-        { key:"DATE", width:15 },
-        { key:"in_time", width:12 },
-        { key:"lunch_out", width:12 },
-        { key:"lunch_in", width:12 },
-        { key:"out_time", width:12 },
-        { key:"status", width:15 },
-        { key:"permission_time", width:15 },
-        { key:"total_hours", width:15 },
-        { key:"working_hours", width:15 }
+        { key:"DATE", width:16 },
+        { key:"in_time", width:18 },
+        { key:"lunch_out", width:18 },
+        { key:"lunch_in", width:18 },
+        { key:"out_time", width:18 },
+        { key:"status", width:16 },
+        { key:"permission_time", width:20 },
+        { key:"total_hours", width:20 },
+        { key:"working_hours", width:20 }
       ];
 
       sheet.getRow(3).eachCell(cell => {
@@ -782,19 +795,20 @@ app.get("/admin/report", async (req, res) => {
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "FF1F4E78" }
+          fgColor: { argb: "FF4F81BD" }
         };
         cell.alignment = { horizontal: "center" };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" }
+        };
       });
 
       sheet.views = [{ state: 'frozen', ySplit: 3 }];
 
-      sheet.autoFilter = {
-        from: 'A3',
-        to: 'I3'
-      };
-
-      /* SUMMARY VARS */
+      /* ---------- SUMMARY VARS ---------- */
       let totalWorkingDays = 0;
       let totalAbsent = 0;
       let totalHolidays = 0;
@@ -821,7 +835,6 @@ app.get("/admin/report", async (req, res) => {
         else if (r.attendance_status) status = r.attendance_status;
         else if (r.in_time) status = "Present";
 
-        /* COUNT */
         if (status === "Holiday") totalHolidays++;
         else if (status === "Absent") totalAbsent++;
         else totalWorkingDays++;
@@ -829,7 +842,7 @@ app.get("/admin/report", async (req, res) => {
         if (status === "WFH") totalWFH++;
         if (status === "Half Day") totalHalfDay++;
         if (status === "Permission") totalPermission++;
-        /* ADD ROW */
+
         const row = sheet.addRow({
           DATE: formattedDate,
           in_time: formatTime12hr(r.in_time),
@@ -837,20 +850,42 @@ app.get("/admin/report", async (req, res) => {
           lunch_in: formatTime12hr(r.lunch_in),
           out_time: formatTime12hr(r.out_time),
           status: status,
-          permission_time: r.permission_time || "-",
-          total_hours: r.total_hours || "-",
-          working_hours: r.working_hours || "-"
+          permission_time: formatDuration(r.permission_time),
+          total_hours: formatDuration(r.total_hours),
+          working_hours: formatDuration(r.working_hours)
         });
 
-        /* 🔥 COLOR HIGHLIGHT */
+        /* ---------- ALIGN + BORDER ---------- */
+        row.eachCell(cell => {
+          cell.alignment = { horizontal: "center" };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" }
+          };
+        });
+
+        /* ---------- ALT ROW COLOR ---------- */
+        if (row.number % 2 === 0) {
+          row.eachCell(cell => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFF7F9FC" }
+            };
+          });
+        }
+
+        /* ---------- STATUS COLOR ---------- */
         let color = "";
 
-        if (status === "Present" || status === "Completed") color = "FFCCFFCC"; 
-        if (status === "Permission") color = "FFD9B3FF"; // Purple
-        if (status === "Absent") color = "FFFF9999";      // Red
-        if (status === "Holiday") color = "FFFFFF99";     // Yellow
-        if (status === "Half Day") color = "FFFFCC99";    // Orange
-        if (status === "WFH") color = "FFCCE5FF";         // Blue
+        if (status === "Present" || status === "Completed") color = "FFCCFFCC";
+        if (status === "Permission") color = "FFD9B3FF";
+        if (status === "Absent") color = "FFFF9999";
+        if (status === "Holiday") color = "FFFFFF99";
+        if (status === "Half Day") color = "FFFFCC99";
+        if (status === "WFH") color = "FFCCE5FF";
 
         if (color) {
           row.eachCell(cell => {
@@ -862,31 +897,58 @@ app.get("/admin/report", async (req, res) => {
           });
         }
 
-        /* 🔥 PERMISSION HOURS SUM */
-if (r.permission_time) {
-  const [h, m] = r.permission_time.split(":").map(Number);
-  totalPermissionMinutes += (h * 60) + m;
-}
+        if (r.permission_time) {
+          const [h, m] = r.permission_time.split(":").map(Number);
+          totalPermissionMinutes += (h * 60) + m;
+        }
 
       });
 
-      /* 🔥 PERMISSION HOURS TOTAL */
+      /* ---------- SUMMARY ---------- */
       const totalPermissionHours = Math.floor(totalPermissionMinutes / 60);
       const totalPermissionMinutesRemaining = totalPermissionMinutes % 60;
-      const totalPermissionTime = `${String(totalPermissionHours).padStart(2,"0")}:${String(totalPermissionMinutesRemaining).padStart(2,"0")}`;
-      /* SUMMARY */
+
+      const totalPermissionTime = formatDuration(
+        `${String(totalPermissionHours).padStart(2,"0")}:${String(totalPermissionMinutesRemaining).padStart(2,"0")}`
+      );
+
       const lastRow = sheet.lastRow.number + 2;
 
-      sheet.getCell(`A${lastRow}`).value = "Summary";
+      sheet.getCell(`A${lastRow}`).value = "📊 Summary";
       sheet.getCell(`A${lastRow}`).font = { bold: true, size: 14 };
 
-      sheet.addRow(["Total Working Days", totalWorkingDays]);
-      sheet.addRow(["Total Absent", totalAbsent]);
-      sheet.addRow(["Total Holidays", totalHolidays]);
-      sheet.addRow(["Total WFH", totalWFH]);
-      sheet.addRow(["Total Half Days", totalHalfDay]);
-      sheet.addRow(["Total Permissions", totalPermission]);
-      sheet.addRow(["Total Permission Time", totalPermissionTime]);
+      const summaryData = [
+        ["Total Working Days", totalWorkingDays],
+        ["Total Absent", totalAbsent],
+        ["Total Holidays", totalHolidays],
+        ["Total WFH", totalWFH],
+        ["Total Half Days", totalHalfDay],
+        ["Total Permissions", totalPermission],
+        ["Total Permission Time", totalPermissionTime]
+      ];
+
+      summaryData.forEach((item, index) => {
+        const row = sheet.addRow(item);
+
+        row.eachCell(cell => {
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" }
+          };
+        });
+
+        if (index % 2 === 0) {
+          row.eachCell(cell => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "FFEAF1FB" }
+            };
+          });
+        }
+      });
 
     });
 
@@ -906,8 +968,6 @@ if (r.permission_time) {
   });
 
 });
-
-
 
 
 /* ---------------- UPDATE EMPLOYEE ---------------- */
