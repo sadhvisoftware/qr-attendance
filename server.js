@@ -760,7 +760,7 @@ app.get("/admin/report", async (req, res) => {
 
   FROM employees e
   CROSS JOIN dates d
-  WHERE e.role='employee'
+  
 
   LEFT JOIN attendance a
     ON e.id = a.employee_id
@@ -768,6 +768,8 @@ app.get("/admin/report", async (req, res) => {
 
   LEFT JOIN holidays h
     ON h.holiday_date = d.date
+
+WHERE e.role = 'employee'
 
   ORDER BY e.NAME, d.date
   `;
