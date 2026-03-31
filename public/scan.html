@@ -759,51 +759,11 @@ function formatDate(){
 
 function loadStatus() {
 
-  const btnIn = document.getElementById("btnIn");
-  const btnLunchOut = document.getElementById("btnLunchOut");
-  const btnLunchIn = document.getElementById("btnLunchIn");
-  const btnPermission = document.getElementById("btnPermission");
-  const outBtn = document.getElementById("outBtn");
-
-  // reset (show all)
-[btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
-  if(b) b.style.display = "block";
-});
-
-// CONDITIONS
-
-// ❌ IN already marked
-if(data.in_time){
-  btnIn.style.display = "none";
-}
-
-// ❌ Lunch started
-if(data.lunch_out){
-  btnLunchOut.style.display = "none";
-}
-
-// ❌ Lunch ended
-if(data.lunch_in){
-  btnLunchIn.style.display = "none";
-}
-
-// ❌ Permission already taken
-if(data.permission_type === "Permission"){
-  btnPermission.style.display = "none";
-}
-
-// ❌ OUT done → hide all
-if(data.out_time){
-  [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
-    if(b) b.style.display = "none";
-  });
-}
-
   fetch("/employee/status?employee_id=" + employeeId)
     .then(res => res.json())
     .then(data => {
 
-      // 🔥 SET TODAY'S DATE
+      // 🔥 SET DATE
       document.getElementById("todayDate").innerText = formatDate();
 
       // 🔥 SET TIMES
@@ -825,7 +785,43 @@ if(data.out_time){
         lastScanTime.innerText = "Last Scan Time: -";
       }
 
+      // 🔥 BUTTON CONTROL (MOVE HERE)
+
+      const btnIn = document.getElementById("btnIn");
+      const btnLunchOut = document.getElementById("btnLunchOut");
+      const btnLunchIn = document.getElementById("btnLunchIn");
+      const btnPermission = document.getElementById("btnPermission");
+      const btnOut = document.getElementById("outBtn");
+
+      // reset
+      [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
+        if(b) b.style.display = "block";
+      });
+
+      if(data.in_time){
+        btnIn.style.display = "none";
+      }
+
+      if(data.lunch_out){
+        btnLunchOut.style.display = "none";
+      }
+
+      if(data.lunch_in){
+        btnLunchIn.style.display = "none";
+      }
+
+      if(data.permission_type === "Permission"){
+        btnPermission.style.display = "none";
+      }
+
+      if(data.out_time){
+        [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
+          if(b) b.style.display = "none";
+        });
+      }
+
     });
+
 }
 
 loadStatus();
@@ -1079,7 +1075,7 @@ function submitPermission(){
 
 </div>
 
-// PERMISSION POPUP
+<!-- PERMISSION POPUP -->
 <div id="permissionPopup" class="popup-overlay">
 
   <div class="popup-card">
