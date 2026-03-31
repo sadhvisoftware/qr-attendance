@@ -798,12 +798,12 @@ app.get("/admin/report", async (req, res) => {
       );
 
       /* ---------- TITLE ---------- */
-      sheet.mergeCells("A1:I1");
+      sheet.mergeCells("A1:J1");
       sheet.getCell("A1").value = `${emp.name} - Attendance Report`;
       sheet.getCell("A1").font = { size: 18, bold: true, color: { argb: "FF1F4E78" } };
       sheet.getCell("A1").alignment = { horizontal: "center" };
 
-      sheet.mergeCells("A2:I2");
+      sheet.mergeCells("A2:J2");
       sheet.getCell("A2").value = `📅 From ${start} To ${end}`;
       sheet.getCell("A2").alignment = { horizontal: "center" };
 
