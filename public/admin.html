@@ -263,7 +263,9 @@ transform:translate(-50%,0);
 <th>Total Hours</th>
 <th>Working Hours</th>
 <th>Status</th>
+<th>Remark</th>
 <th>Action</th>
+
 
 </tr>
 
@@ -331,17 +333,6 @@ function showUpdatePopup(){
   if(popup){
     popup.classList.remove("d-none");
   }
-}
-
-/* UPDATE APP (force refresh properly) */
-function updateApp(){
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(reg => reg.waiting?.postMessage({ type: "SKIP_WAITING" }));
-    });
-  }
-
-  window.location.reload(true);
 }
 
 /* 🔥 UPDATE ACTION */
@@ -515,6 +506,12 @@ const tr=`
 
 <td><span class="${badge}">${status}</span></td>
 
+<!-- ✅ REMARK FIRST -->
+<td>
+  ${row.remark ? `<span class="badge bg-secondary">${row.remark}</span>` : "-"}
+</td>
+
+<!-- ✅ THEN ACTION -->
 <td>
 
 <button class="btn btn-sm btn-primary"
@@ -531,7 +528,8 @@ onclick="openEditAttendance(
   '${row.lunch_in || ""}',
   '${row.out_time || ""}',
   '${row.permission_type || ""}',
-  '${row.permission_time || ""}'
+  '${row.permission_time || ""}',
+  '${row.remark || ""}'   // 🔥 ADD THIS
 )">
 Attendance
 </button>
@@ -542,8 +540,6 @@ Delete Employee
 </button>
 
 </td>
-
-</tr>
 
 `;
 
@@ -626,7 +622,7 @@ modal.show();
 
 }
 
-function openEditAttendance(id,date,inTime,lunchOut,lunchIn,outTime,ptype,ptime){
+function openEditAttendance(id,date,inTime,lunchOut,lunchIn,outTime,ptype,ptime,remark){
 
 document.getElementById("attEmployeeId").value=id;
 document.getElementById("attDate").value =
@@ -639,6 +635,8 @@ document.getElementById("attOut").value=outTime || "";
 
 document.getElementById("attPermissionType").value=ptype || "";
 document.getElementById("attPermissionTime").value=ptime || "";
+
+document.getElementById("attRemark").value=remark || "";
 
 const modal=new bootstrap.Modal(document.getElementById("editAttendanceModal"));
 modal.show();
@@ -687,6 +685,7 @@ const permission_type=document.getElementById("attPermissionType").value;
 const permission_time=document.getElementById("attPermissionTime").value;
 
 const attendance_status=document.getElementById("attStatus").value;
+const remark=document.getElementById("attRemark").value;
 
 fetch("/admin/update-attendance",{
 
@@ -705,7 +704,8 @@ lunch_in,
 out_time,
 permission_type,
 permission_time,
-attendance_status
+attendance_status,
+remark
 })
 
 })
@@ -829,6 +829,10 @@ loadStats();
 <option value="WFH">WFH</option>
 <option value="Leave">Leave</option>
 </select>
+
+<label>Remark</label>
+<input type="text" id="attRemark" class="form-control mb-2" placeholder="e.g. Sick leave, Personal work, etc.">
+
 
 </div>
 

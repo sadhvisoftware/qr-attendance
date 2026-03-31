@@ -1,2 +1,2 @@
 ALTER TABLE attendance
-ADD UNIQUE KEY unique_attendance (employee_id, DATE);
+ADD COLUMN remark VARCHAR(255) NULL;

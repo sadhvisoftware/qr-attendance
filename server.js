@@ -1130,7 +1130,8 @@ lunch_in,
 out_time,
 permission_type,
 permission_time,
-attendance_status
+attendance_status,
+remark
 } = req.body;
 
 /* 🔥 SAFETY LOG */
@@ -1141,8 +1142,8 @@ const attendanceDate = date || new Date().toLocaleDateString("en-CA");
 
 db.query(`
 INSERT INTO attendance
-(employee_id, DATE, in_time, lunch_out, lunch_in, out_time, permission_type, permission_time, attendance_status)
-VALUES (?,?,?,?,?,?,?,?,?)
+(employee_id, DATE, in_time, lunch_out, lunch_in, out_time, permission_type, permission_time, attendance_status , remark)
+VALUES (?,?,?,?,?,?,?,?,?,?)
 ON DUPLICATE KEY UPDATE
 in_time=VALUES(in_time),
 lunch_out=VALUES(lunch_out),
@@ -1150,7 +1151,8 @@ lunch_in=VALUES(lunch_in),
 out_time=VALUES(out_time),
 permission_type=VALUES(permission_type),
 permission_time=VALUES(permission_time),
-attendance_status=VALUES(attendance_status)
+attendance_status=VALUES(attendance_status),
+remark=VALUES(remark)
 `,
 [
 employee_id,
@@ -1161,7 +1163,8 @@ lunch_in || null,
 out_time || null,
 permission_type || null,
 permission_time || null,
-attendance_status || null
+attendance_status || null,
+remark || null
 ],
 (err,result)=>{
   if(err){
