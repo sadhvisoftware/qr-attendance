@@ -1052,6 +1052,8 @@ function submitPermission(){
 
     <h5 class="mb-3 text-center">Select Attendance</h5>
 
+    <div id="dayClosedMsg" class="text-center text-danger fw-bold mb-2 d-none"></div>
+
     <div class="d-grid gap-2">
 
       <button id="btnIn" class="btn btn-success popup-btn" onclick="sendAttendance('IN')">
@@ -1085,7 +1087,7 @@ function submitPermission(){
 
 </div>
 
-<div id="dayClosedMsg" class="text-center text-danger fw-bold mb-2 d-none"></div>
+
 
 <!-- PERMISSION POPUP -->
 <div id="permissionPopup" class="popup-overlay">
