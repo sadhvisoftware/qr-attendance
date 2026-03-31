@@ -122,13 +122,14 @@ role:user.role
 
 app.post("/mark-attendance",(req,res)=>{
 
-const {employee_id,type} = req.body;
+const {employee_id,type,remark} = req.body;
 
 const now = new Date();
 const ist = new Date(now.toLocaleString("en-US",{timeZone:"Asia/Kolkata"}));
 
 const today = ist.toISOString().split("T")[0];
 const currentTime = ist.toTimeString().split(" ")[0];
+
 
 db.query(
 "SELECT * FROM attendance WHERE employee_id=? AND DATE=?",
@@ -313,13 +314,15 @@ permission_time=?,
 out_time=?,
 total_hours=?,
 working_hours=?,
-attendance_status='Permission'
+attendance_status='Permission',
+remark=?
 WHERE id=?`,
 [
 permissionTime,
 permissionStart,
 totalHours,
 workingHours,
+remark || null,
 r.id
 ],
 ()=>res.send("Afternoon Permission Marked - Day Closed")
@@ -752,6 +755,7 @@ app.get("/admin/report", async (req, res) => {
     a.total_hours,
     a.working_hours,
     a.attendance_status,
+    a.remark,
     h.reason AS holiday_reason
 
   FROM employees e
@@ -806,7 +810,7 @@ app.get("/admin/report", async (req, res) => {
       /* ---------- HEADER ---------- */
       sheet.getRow(3).values = [
         "Date","In Time","Lunch Out","Lunch In","Out Time",
-        "Status","Permission","Total Hours","Working Hours"
+        "Status","Permission","Total Hours","Working Hours","Remark"
       ];
 
       sheet.columns = [
@@ -818,7 +822,8 @@ app.get("/admin/report", async (req, res) => {
         { key:"status", width:16 },
         { key:"permission_time", width:20 },
         { key:"total_hours", width:20 },
-        { key:"working_hours", width:20 }
+        { key:"working_hours", width:20 },
+        { key:"remark", width:30 }
       ];
 
       sheet.getRow(3).eachCell(cell => {
@@ -883,7 +888,8 @@ app.get("/admin/report", async (req, res) => {
           status: status,
           permission_time: formatDuration(r.permission_time),
           total_hours: formatDuration(r.total_hours),
-          working_hours: formatDuration(r.working_hours)
+          working_hours: formatDuration(r.working_hours),
+          remark: r.remark || "-"
         });
 
         /* ---------- ALIGN + BORDER ---------- */

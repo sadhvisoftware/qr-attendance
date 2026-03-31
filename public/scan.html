@@ -526,18 +526,6 @@ function showUpdatePopup(){
     popup.classList.remove("d-none");
   }
 }
-
-/* UPDATE APP (force refresh properly) */
-function updateApp(){
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(reg => reg.waiting?.postMessage({ type: "SKIP_WAITING" }));
-    });
-  }
-
-  window.location.reload(true);
-}
-
 /* 🔥 UPDATE ACTION */
 function updateApp(){
   if ('serviceWorker' in navigator) {
@@ -770,6 +758,47 @@ function formatDate(){
 }
 
 function loadStatus() {
+
+  const btnIn = document.getElementById("btnIn");
+  const btnLunchOut = document.getElementById("btnLunchOut");
+  const btnLunchIn = document.getElementById("btnLunchIn");
+  const btnPermission = document.getElementById("btnPermission");
+  const outBtn = document.getElementById("outBtn");
+
+  // reset (show all)
+[btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
+  if(b) b.style.display = "block";
+});
+
+// CONDITIONS
+
+// ❌ IN already marked
+if(data.in_time){
+  btnIn.style.display = "none";
+}
+
+// ❌ Lunch started
+if(data.lunch_out){
+  btnLunchOut.style.display = "none";
+}
+
+// ❌ Lunch ended
+if(data.lunch_in){
+  btnLunchIn.style.display = "none";
+}
+
+// ❌ Permission already taken
+if(data.permission_type === "Permission"){
+  btnPermission.style.display = "none";
+}
+
+// ❌ OUT done → hide all
+if(data.out_time){
+  [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
+    if(b) b.style.display = "none";
+  });
+}
+
   fetch("/employee/status?employee_id=" + employeeId)
     .then(res => res.json())
     .then(data => {
@@ -800,6 +829,15 @@ function loadStatus() {
 }
 
 loadStatus();
+
+const todayKey = "attendance_done_" + new Date().toISOString().split("T")[0];
+
+if(localStorage.getItem(todayKey)){
+  document.querySelectorAll(".popup-btn").forEach(btn=>{
+    btn.disabled = true;
+    btn.style.opacity = "0.5";
+  });
+}
 
 function loadHolidays(){
 
@@ -916,6 +954,12 @@ async function controlOutButton(){
 // Send Attendance Data to Server
 function sendAttendance(type){
 
+   const todayKey = "attendance_done_" + new Date().toISOString().split("T")[0];
+
+  if(type === "OUT" || type === "PERMISSION"){
+    localStorage.setItem(todayKey, "done");
+  }
+
 document.getElementById("actionPopup").style.display="none";
 
 fetch("/mark-attendance",{
@@ -946,7 +990,54 @@ location.reload();
 
 }
 
+
+function openPermissionPopup(){
+  document.getElementById("actionPopup").style.display = "none";
+  document.getElementById("permissionPopup").style.display = "flex";
+}
+
+function closePermissionPopup(){
+  document.getElementById("permissionPopup").style.display = "none";
+}
+
+function submitPermission(){
+
+  const reason = document.getElementById("permReason").value;
+  const remark = document.getElementById("permRemark").value;
+
+  if(!reason && !remark){
+    alert("Enter reason or remark");
+    return;
+  }
+
+  const todayKey = "attendance_done_" + new Date().toISOString().split("T")[0];
+  localStorage.setItem(todayKey, "done");   // ✅ ADD THIS
+
+  document.getElementById("permissionPopup").style.display = "none";
+
+  fetch("/mark-attendance",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      employee_id:employeeId,
+      type:"PERMISSION",
+      lat:userLat,
+      lng:userLng,
+      remark: remark || reason
+    })
+  })
+  .then(res=>res.text())
+  .then(msg=>{
+    document.getElementById("successBox").innerText = msg;
+    document.getElementById("successBox").classList.remove("d-none");
+
+    setTimeout(()=>location.reload(),2000);
+  });
+
+}
+
 </script>
+
 <!-- ACTION POPUP -->
 
 <div id="actionPopup" class="popup-overlay">
@@ -957,19 +1048,19 @@ location.reload();
 
     <div class="d-grid gap-2">
 
-      <button class="btn btn-success popup-btn" onclick="sendAttendance('IN')">
+      <button id="btnIn" class="btn btn-success popup-btn" onclick="sendAttendance('IN')">
         🟢 IN TIME
       </button>
 
-      <button class="btn btn-warning popup-btn" onclick="sendAttendance('LUNCH_OUT')">
+      <button id="btnLunchOut" class="btn btn-warning popup-btn" onclick="sendAttendance('LUNCH_OUT')">
         🍴 Lunch Start
       </button>
 
-      <button class="btn btn-info popup-btn" onclick="sendAttendance('LUNCH_IN')">
+      <button id="btnLunchIn" class="btn btn-info popup-btn" onclick="sendAttendance('LUNCH_IN')">
         🔙 Lunch End
       </button>
 
-      <button class="btn btn-secondary popup-btn" onclick="sendAttendance('PERMISSION')">
+      <button id="btnPermission" class="btn btn-secondary popup-btn" onclick="openPermissionPopup()">
         ⏳ Afternoon Permission
       </button>
 
@@ -982,6 +1073,35 @@ location.reload();
     <!-- CANCEL BUTTON -->
     <button class="btn btn-light w-100 mt-3" onclick="closePopup()">
       ❌ Cancel
+    </button>
+
+  </div>
+
+</div>
+
+// PERMISSION POPUP
+<div id="permissionPopup" class="popup-overlay">
+
+  <div class="popup-card">
+
+    <h5 class="mb-3 text-center">Permission Reason</h5>
+
+    <select id="permReason" class="form-control mb-2">
+      <option value="">Select Reason</option>
+      <option value="Personal Work">Personal Work</option>
+      <option value="Medical">Medical</option>
+      <option value="Emergency">Emergency</option>
+      <option value="Work from Home">Work from Home</option>
+    </select>
+
+    <input type="text" id="permRemark" class="form-control mb-3" placeholder="Enter remark">
+
+    <button class="btn btn-success w-100 mb-2" onclick="submitPermission()">
+      Submit
+    </button>
+
+    <button class="btn btn-light w-100" onclick="closePermissionPopup()">
+      Cancel
     </button>
 
   </div>
