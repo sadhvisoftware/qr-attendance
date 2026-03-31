@@ -418,6 +418,7 @@ a.working_hours,
 a.permission_type,
 a.permission_time,
 a.attendance_status,
+a.remark,
 h.reason as holiday_reason
 FROM employees e
 LEFT JOIN attendance a
