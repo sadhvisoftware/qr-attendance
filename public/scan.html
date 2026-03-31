@@ -792,6 +792,7 @@ function loadStatus() {
       const btnLunchIn = document.getElementById("btnLunchIn");
       const btnPermission = document.getElementById("btnPermission");
       const btnOut = document.getElementById("outBtn");
+      const dayMsg = document.getElementById("dayClosedMsg");
 
       // reset
       [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
@@ -815,10 +816,19 @@ function loadStatus() {
       }
 
       if(data.out_time){
-        [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
-          if(b) b.style.display = "none";
-        });
-      }
+
+  // 🔒 show message with time
+  dayMsg.innerText = "🔒 Day closed at " + format12hr(data.out_time);
+  dayMsg.classList.remove("d-none");
+
+  // hide all buttons
+  [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
+    if(b) b.style.display = "none";
+  });
+
+}else{
+  dayMsg.classList.add("d-none");
+}
 
     });
 
@@ -1074,6 +1084,8 @@ function submitPermission(){
   </div>
 
 </div>
+
+<div id="dayClosedMsg" class="text-center text-danger fw-bold mb-2 d-none"></div>
 
 <!-- PERMISSION POPUP -->
 <div id="permissionPopup" class="popup-overlay">
