@@ -812,7 +812,7 @@ WHERE e.role = 'employee'
 
       /* ---------- HEADER ---------- */
       sheet.getRow(3).values = [
-        "Date","In Time","Lunch Out","Lunch In","Out Time",
+        "Date","In Time","Lunch Start","Lunch End","Out Time",
         "Status","Permission","Total Hours","Working Hours","Remark"
       ];
 
