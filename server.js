@@ -760,6 +760,7 @@ app.get("/admin/report", async (req, res) => {
 
   FROM employees e
   CROSS JOIN dates d
+  WHERE e.role='employee'
 
   LEFT JOIN attendance a
     ON e.id = a.employee_id
