@@ -377,10 +377,22 @@ workingHours = toHHMM(finalWorking);
 
 /* 🔥 HANDLE EARLY OUT + LOW HOURS */
 
-let status="Full Day";
+let status = "Full Day";
 
-if(toMinutes(workingHours) < 240){
-status="Half Day";
+/* 🔥 PRESERVE ORIGINAL LOGIC */
+if(r.attendance_status === "Half Day"){
+  status = "Half Day";
+}
+else if(r.attendance_status === "Permission"){
+  status = "Permission";
+}
+else{
+  // normal case
+  if(toMinutes(workingHours) < 240){
+    status = "Half Day";
+  } else {
+    status = "Full Day";
+  }
 }
 
 db.query(
