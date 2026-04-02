@@ -258,12 +258,11 @@ transform:translate(-50%,0);
 <th>Lunch Start</th>
 <th>Lunch End</th>
 <th>OUT Time</th>
-<th>Permission</th>
 <th>Permission Time</th>
 <th>Total Hours</th>
 <th>Working Hours</th>
 <th>Status</th>
-<th>Remark</th>
+<th>Reason</th>
 <th>Action</th>
 
 
@@ -444,20 +443,28 @@ if(row.holiday_reason){
   status="Holiday";
   badge="badge bg-warning text-dark";
 }
+else if(row.attendance_status === "Leave"){
+  status="Leave";
+  badge="badge bg-danger";
+}
+else if(row.attendance_status === "WFH"){
+  status="WFH";
+  badge="badge bg-primary";
+}
 else if(row.attendance_status === "Permission"){
   status="Permission";
   badge="badge bg-purple";
 }
-else if(row.attendance_status==="WFH"){
-  status="WFH";
-  badge="badge bg-primary";
+else if(row.attendance_status === "Half Day"){
+  status="Half Day";
+  badge="badge bg-warning text-dark";
 }
 else if(row.in_time && !row.out_time){
   status="Working";
   badge="badge bg-info text-dark";
 }
 else if(row.out_time){
-  status="Completed";
+  status="Full Day";
   badge="badge bg-success";
 }
 const tr=`
@@ -472,19 +479,41 @@ const tr=`
 
 <td>${row.DATE ? new Date(row.DATE).toLocaleDateString() : "-"}</td>
 
-<td>${formatTime(row.in_time)}</td>
+<td>
+  ${
+    row.in_time
+    ? (() => {
+        const late = row.in_time > "10:15:00" && row.in_time <= "10:45:00";
+
+        if(late){
+          const delayMin =
+            (new Date(`1970-01-01T${row.in_time}`) -
+             new Date(`1970-01-01T10:15:00`)) / 60000;
+
+          const h = Math.floor(delayMin / 60);
+          const m = delayMin % 60;
+
+          return `
+            <span style="color:red;font-weight:600;">
+              ${formatTime(row.in_time)}
+            </span><br>
+            <small style="color:red;">
+              Late: ${h > 0 ? h + " hr " : ""}${m} min
+            </small>
+          `;
+        }
+
+        return formatTime(row.in_time);
+      })()
+    : "-"
+  }
+</td>
 
 <td>${formatTime(row.lunch_out)}</td>
 
 <td>${formatTime(row.lunch_in)}</td>
 
 <td>${formatTime(row.out_time)}</td>
-
-<td>
-  ${row.permission_type === "Late Entry"
-    ? `<span class="badge bg-danger">Late</span>`
-    : (row.permission_type || "-")}
-</td>
 
 <td>
   ${row.permission_time 
@@ -824,7 +853,7 @@ loadStats();
 <label>Status</label>
 <select id="attStatus" class="form-control mb-2">
 <option value="">Select</option>
-<option value="Completed">Completed</option>
+<option value="Full Day">Full Day</option>
 <option value="Half Day">Half Day</option>
 <option value="WFH">WFH</option>
 <option value="Leave">Leave</option>

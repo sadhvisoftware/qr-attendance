@@ -169,24 +169,19 @@ let status="Present";
 /* 🔥 UPDATED TIME → 10:15 */
 
 if(currentTime <= "10:15:00"){
-
-status="Present";
-
+  status="Present";
 }
-
-else if(currentTime > "10:15:00" && currentTime <= "12:30:00"){
-
-status="Present";
-permissionType="Late Entry";
-permissionTime=timeDiff("10:15:00",currentTime);
-
+else if(currentTime <= "10:45:00"){
+  status="Present";   // late only
 }
-
+else if(currentTime <= "12:30:00"){
+  status="Permission";
+  permissionType="Permission";
+  permissionTime=timeDiff("10:45:00",currentTime);
+}
 else{
-
-status="Half Day";
-permissionType="Half Day";
-
+  status="Half Day";
+  permissionType=null;
 }
 
 db.query(
@@ -370,7 +365,7 @@ workingHours = toHHMM(finalWorking);
 
 /* 🔥 HANDLE EARLY OUT + LOW HOURS */
 
-let status="Completed";
+let status="Full Day";
 
 if(toMinutes(workingHours) < 240){
 status="Half Day";
@@ -443,19 +438,13 @@ let status="Absent";
 /* Holiday */
 
 if(r.holiday_reason){
-status="Holiday";
+  status = "Holiday";
 }
-
-/* Attendance */
-
-if(r.attendance_status){
-status=r.attendance_status;
+else if(r.attendance_status){
+  status = r.attendance_status;
 }
-
-/* Present */
-
-if(r.in_time && !r.out_time){
-status="Present";
+else if(r.in_time && !r.out_time){
+  status = "Present";
 }
 
 return{
@@ -920,7 +909,7 @@ WHERE e.role = 'employee'
         /* ---------- STATUS COLOR ---------- */
         let color = "";
 
-        if (status === "Present" || status === "Completed") color = "FFCCFFCC";
+        if (status === "Present" || status === "Full Day") color = "FFCCFFCC";
         if (status === "Permission") color = "FFD9B3FF";
         if (status === "Absent") color = "FFFF9999";
         if (status === "Holiday") color = "FFFFFF99";
