@@ -488,6 +488,8 @@ if ("serviceWorker" in navigator) {
 
 }
 
+
+
 // LOGOUT FUNCTION
 function disableBtn(btn){
   btn.disabled = true;
@@ -539,6 +541,7 @@ function updateApp(){
 let userLat=null;
 let userLng=null;
 let scannerStarted=false;
+let html5QrCode;
 
 const employeeId=localStorage.getItem("employee_id");
 const employeeName=localStorage.getItem("employee_name");
@@ -656,7 +659,7 @@ if(scannerStarted) return;
 
 document.getElementById("reader").style.display="block";
 
-const html5QrCode=new Html5Qrcode("reader");
+html5QrCode = new Html5Qrcode("reader");
 
 Html5Qrcode.getCameras().then(devices=>{
 
@@ -770,7 +773,40 @@ function loadStatus() {
       document.getElementById("todayDate").innerText = formatDate();
 
       // 🔥 SET TIMES
-      document.getElementById("inTime").innerText = format12hr(data.in_time);
+      const inTimeEl = document.getElementById("inTime");
+
+if(data.in_time){
+
+  const inTime = data.in_time;
+  const formatted = format12hr(inTime);
+
+  // check late (10:15–10:45)
+  if(inTime > "10:15:00" && inTime <= "10:45:00"){
+
+    const delayMin = Math.floor(
+      (new Date(`1970-01-01T${inTime}`) -
+       new Date(`1970-01-01T10:15:00`)) / 60000
+    );
+
+    const h = Math.floor(delayMin / 60);
+    const m = delayMin % 60;
+
+    inTimeEl.innerHTML = `
+      <span style="color:red;font-weight:600;">
+        ${formatted}
+      </span><br>
+      <small style="color:red;">
+        Late: ${h > 0 ? h + " hr " : ""}${m} min
+      </small>
+    `;
+
+  } else {
+    inTimeEl.innerText = formatted;
+  }
+
+}else{
+  inTimeEl.innerText = "-";
+}
       document.getElementById("lunchOut").innerText = format12hr(data.lunch_out);
       document.getElementById("lunchIn").innerText = format12hr(data.lunch_in);
       document.getElementById("outTime").innerText = format12hr(data.out_time);
@@ -978,7 +1014,15 @@ function sendAttendance(type){
     localStorage.setItem(todayKey, "done");
   }
 
+  // close popup
 document.getElementById("actionPopup").style.display="none";
+
+if(html5QrCode){
+  html5QrCode.stop().then(() => {
+    document.getElementById("reader").style.display = "none";
+    scannerStarted = false;
+  }).catch(err => console.log(err));
+}
 
 fetch("/mark-attendance",{
 method:"POST",
@@ -1001,8 +1045,8 @@ successBox.classList.remove("d-none");
 updateLastStatus(msg);
 
 setTimeout(()=>{
-location.reload();
-},3000);
+loadStatus();
+},1000);
 
 });
 
