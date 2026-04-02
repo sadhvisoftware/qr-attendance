@@ -124,7 +124,7 @@ app.post("/mark-attendance",(req,res)=>{
 
 const {employee_id,type,remark} = req.body;
 
-const safeRemark = remark || "Afternoon Permission";
+
 
 const now = new Date();
 const ist = new Date(now.toLocaleString("en-US",{timeZone:"Asia/Kolkata"}));
@@ -278,69 +278,6 @@ WHERE id=?`,
 return;
 }
 
-
-/* ---------------- PERMISSION ---------------- */
-
-if(type==="PERMISSION"){
-
-if(results.length===0){
-return res.send("Mark IN first");
-}
-
-const r=results[0];
-
-if(r.permission_type==="Permission"){
-return res.send("Permission already marked");
-}
-
-if(r.out_time){
-return res.send("Day already closed");
-}
-
-let permissionStart=currentTime;
-
-/* total work till permission */
-
-let totalHours=timeDiff(r.in_time,permissionStart);
-
-let breakTime="00:00";
-
-if(r.lunch_out && r.lunch_in){
-breakTime=timeDiff(r.lunch_out,r.lunch_in);
-}
-
-let workingHours=calcWorking(totalHours,breakTime);
-
-/* permission till 7:15 PM */
-
-let permissionTime=timeDiff(permissionStart,"19:15:00");
-
-db.query(
-`UPDATE attendance
-SET 
-permission_type='Permission',
-permission_time=?,
-out_time=?,
-total_hours=?,
-working_hours=?,
-attendance_status='Permission',
-remark=?
-WHERE id=?`,
-[
-permissionTime,
-permissionStart,
-totalHours,
-workingHours,
-remark || null,
-r.id
-],
-()=>res.send("Afternoon Permission Marked - Day Closed")
-);
-
-return;
-}
-
-
 /* ---------------- OUT TIME ---------------- */
 
 if(type==="OUT"){
@@ -366,47 +303,53 @@ breakTime=timeDiff(r.lunch_out,r.lunch_in);
 let workingHours = calcWorking(totalHours, breakTime);
 
 /* 🔥 SUBTRACT PERMISSION */
-let permissionTime = r.permission_time || "00:00";
+// 🔥 REQUIRED WORKING TIME
+const requiredMin = 8 * 60;
 
 let workingMin = toMinutes(workingHours);
-let permissionMin = toMinutes(permissionTime);
 
-let finalWorking = workingMin - permissionMin;
-
-if(finalWorking < 0) finalWorking = 0;
-
-workingHours = toHHMM(finalWorking);
-
-/* 🔥 HANDLE EARLY OUT + LOW HOURS */
-
+let permissionTime = "00:00";
 let status = "Full Day";
+let permissionType = null;
 
-/* 🔥 PRESERVE ORIGINAL LOGIC */
-if(r.attendance_status === "Half Day"){
-  status = "Half Day";
-}
-else if(r.attendance_status === "Permission"){
+// 🔥 AUTO PERMISSION
+if(workingMin < requiredMin){
+
+  permissionTime = timeDiff(currentTime, "19:15:00");
+
   status = "Permission";
+  permissionType = "Permission";
+
 }
 else{
-  // normal case
-  if(toMinutes(workingHours) < 240){
+
+  // 🔥 KEEP PREVIOUS RULES (half day etc.)
+  if(r.attendance_status === "Half Day"){
     status = "Half Day";
   } else {
     status = "Full Day";
   }
+
 }
 
 db.query(
 `UPDATE attendance
-SET out_time=?, total_hours=?, working_hours=?, attendance_status=?
+SET 
+out_time=?,
+total_hours=?,
+working_hours=?,
+permission_time=?,
+attendance_status=?,
+permission_type=?
 WHERE id=?`,
 [
-currentTime,
-totalHours,
-workingHours,
-status,
-r.id
+ currentTime,
+  totalHours,
+  workingHours,
+  permissionTime,
+  status,
+  permissionType,
+  r.id
 ],
 ()=>res.send("OUT Time Marked")
 );
@@ -817,12 +760,12 @@ WHERE e.role = 'employee'
       );
 
       /* ---------- TITLE ---------- */
-      sheet.mergeCells("A1:k1");
+      sheet.mergeCells("A1:K1");
       sheet.getCell("A1").value = `${emp.name} - Attendance Report`;
       sheet.getCell("A1").font = { size: 18, bold: true, color: { argb: "FF1F4E78" } };
       sheet.getCell("A1").alignment = { horizontal: "center" };
 
-      sheet.mergeCells("A2:J2");
+      sheet.mergeCells("A2:K2");
       sheet.getCell("A2").value = `📅 From ${start} To ${end}`;
       sheet.getCell("A2").alignment = { horizontal: "center" };
 

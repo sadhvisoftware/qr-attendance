@@ -728,9 +728,6 @@ function updateLastStatus(msg) {
   else if (msg.includes("Lunch End")) {
     status.innerHTML = "<span class='text-primary'>LUNCH END</span>";
   }
-  else if (msg.includes("Permission")) {
-    status.innerHTML = "<span class='text-secondary'>AFTERNOON PERMISSION</span>";
-  }
   else if (msg.includes("OUT")) {
     status.innerHTML = "<span class='text-danger'>OUT TIME</span>";
   }
@@ -834,12 +831,11 @@ const current = now.toTimeString().split(" ")[0];
       const btnIn = document.getElementById("btnIn");
       const btnLunchOut = document.getElementById("btnLunchOut");
       const btnLunchIn = document.getElementById("btnLunchIn");
-      const btnPermission = document.getElementById("btnPermission");
       const btnOut = document.getElementById("outBtn");
       const dayMsg = document.getElementById("dayClosedMsg");
 
       // reset
-      [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
+      [btnIn, btnLunchOut, btnLunchIn, btnOut].forEach(b=>{
         if(b) b.style.display = "block";
       });
 
@@ -857,10 +853,6 @@ const current = now.toTimeString().split(" ")[0];
 
       if(data.lunch_in){
         btnLunchIn.style.display = "none";
-      }
-
-      if(data.permission_type === "Permission"){
-        btnPermission.style.display = "none";
       }
 
       if(data.out_time){
@@ -982,7 +974,7 @@ async function controlOutButton(){
     workedMinutes += (currentTime - lunchIn) / 60000;
   }
 
-  const minRequired = 7.5 * 60;
+  const minRequired = 8 * 60;
 
   const currentHour = currentTime.getHours();
 
@@ -991,18 +983,7 @@ async function controlOutButton(){
     enableBtn(outBtn);
     return;
   }
-
-  if(permissionType === "Permission"){
-    enableBtn(outBtn);
-    return;
-  }
-
-  if(workedMinutes >= minRequired){
-    enableBtn(outBtn);
-    return;
-  }
-
-  disableBtn(outBtn);
+  enableBtn(outBtn);
 }
 
 // Send Attendance Data to Server
@@ -1076,10 +1057,6 @@ loadStatus();
 
       <button id="btnLunchIn" class="btn btn-info popup-btn" onclick="sendAttendance('LUNCH_IN')">
         🔙 Lunch End
-      </button>
-
-      <button id="btnPermission" class="btn btn-secondary popup-btn" onclick="sendAttendance('PERMISSION')">
-        ⏳ Afternoon Permission
       </button>
 
       <button id="outBtn" class="btn btn-danger popup-btn" onclick="sendAttendance('OUT')">
