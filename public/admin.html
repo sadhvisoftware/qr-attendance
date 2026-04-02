@@ -485,10 +485,12 @@ const tr=`
     ? (() => {
         const late = row.in_time > "10:15:00" && row.in_time <= "10:45:00";
 
-        if(late){
-          const delayMin =
+        if (late) {
+
+          const delayMin = Math.floor(
             (new Date(`1970-01-01T${row.in_time}`) -
-             new Date(`1970-01-01T10:15:00`)) / 60000;
+             new Date(`1970-01-01T10:15:00`)) / 60000
+          );
 
           const h = Math.floor(delayMin / 60);
           const m = delayMin % 60;

@@ -177,7 +177,19 @@ else if(currentTime <= "10:45:00"){
 else if(currentTime <= "12:30:00"){
   status="Permission";
   permissionType="Permission";
-  permissionTime=timeDiff("10:45:00",currentTime);
+
+  // 🔥 base 30 min (10:15 → 10:45)
+  const basePermission = 30;
+
+  // extra after 10:45
+  const extraMin = Math.floor(
+    (new Date(`1970-01-01T${currentTime}`) -
+     new Date(`1970-01-01T10:45:00`)) / 60000
+  );
+
+  const totalMin = basePermission + (extraMin > 0 ? extraMin : 0);
+
+  permissionTime = toHHMM(totalMin);
 }
 else{
   status="Half Day";
