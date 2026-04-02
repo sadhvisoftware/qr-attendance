@@ -817,7 +817,7 @@ WHERE e.role = 'employee'
       );
 
       /* ---------- TITLE ---------- */
-      sheet.mergeCells("A1:J1");
+      sheet.mergeCells("A1:k1");
       sheet.getCell("A1").value = `${emp.name} - Attendance Report`;
       sheet.getCell("A1").font = { size: 18, bold: true, color: { argb: "FF1F4E78" } };
       sheet.getCell("A1").alignment = { horizontal: "center" };
@@ -828,7 +828,7 @@ WHERE e.role = 'employee'
 
       /* ---------- HEADER ---------- */
       sheet.getRow(3).values = [
-        "Date","In Time","Lunch Start","Lunch End","Out Time",
+        "Date","In Time","Lunch Start","Lunch End","Break Time","Out Time",
         "Status","Permission","Total Hours","Working Hours","Remark"
       ];
 
@@ -837,6 +837,7 @@ WHERE e.role = 'employee'
         { key:"in_time", width:18 },
         { key:"lunch_out", width:18 },
         { key:"lunch_in", width:18 },
+        { key:"break_time", width:18 },
         { key:"out_time", width:18 },
         { key:"status", width:16 },
         { key:"permission_time", width:20 },
@@ -898,18 +899,34 @@ WHERE e.role = 'employee'
         if (status === "Half Day") totalHalfDay++;
         if (status === "Permission") totalPermission++;
 
+        // 🔥 BREAK TIME CALCULATION
+let breakTime = "-";
+
+if(r.lunch_out && r.lunch_in){
+  const start = new Date(`1970-01-01T${r.lunch_out}`);
+  const end = new Date(`1970-01-01T${r.lunch_in}`);
+
+  const diffMin = Math.floor((end - start) / 60000);
+
+  const h = Math.floor(diffMin / 60);
+  const m = diffMin % 60;
+
+  breakTime = `${h > 0 ? h + " hr " : ""}${m} min`;
+}
+
         const row = sheet.addRow({
-          DATE: formattedDate,
-          in_time: formatTime12hr(r.in_time),
-          lunch_out: formatTime12hr(r.lunch_out),
-          lunch_in: formatTime12hr(r.lunch_in),
-          out_time: formatTime12hr(r.out_time),
-          status: status,
-          permission_time: formatDuration(r.permission_time),
-          total_hours: formatDuration(r.total_hours),
-          working_hours: formatDuration(r.working_hours),
-          remark: r.remark || "-"
-        });
+  DATE: formattedDate,
+  in_time: formatTime12hr(r.in_time),
+  lunch_out: formatTime12hr(r.lunch_out),
+  lunch_in: formatTime12hr(r.lunch_in),
+  break_time: breakTime,  
+  out_time: formatTime12hr(r.out_time),
+  permission_time: formatDuration(r.permission_time),
+  total_hours: formatDuration(r.total_hours),
+  working_hours: formatDuration(r.working_hours),
+  status: status,
+  remark: r.remark || "-"
+});
 
         /* ---------- ALIGN + BORDER ---------- */
         row.eachCell(cell => {
