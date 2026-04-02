@@ -707,15 +707,18 @@ function updateLastStatus(msg) {
   const status = document.getElementById("lastStatus");
   const timeBox = document.getElementById("lastScanTime");
 
-  const now = new Date().toLocaleTimeString("en-IN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
-  });
+  if (msg.includes("IN Time Marked")) {
 
-  if (msg.includes("IN")) {
+  const now = new Date();
+  const current = now.toTimeString().split(" ")[0];
+
+  if(current > "10:45:00"){
+    status.innerHTML = "<span class='text-secondary'>PERMISSION IN TIME</span>";
+  } else {
     status.innerHTML = "<span class='text-success'>IN TIME</span>";
   }
+
+}
   else if (msg.includes("Lunch Start")) {
     status.innerHTML = "<span class='text-warning'>LUNCH START</span>";
   }
@@ -779,6 +782,11 @@ function loadStatus() {
 
       lastStatus.innerText = data.last_scan_type || data.status || "NOT MARKED";
 
+      const now = new Date();
+const current = now.toTimeString().split(" ")[0];
+
+
+
       if (data.last_scan_time) {
         lastScanTime.innerText = "Last Scan Time: " + format12hr(data.last_scan_time);
       } else {
@@ -798,6 +806,10 @@ function loadStatus() {
       [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
         if(b) b.style.display = "block";
       });
+
+      if(current > "10:45:00" && !data.in_time){
+  btnIn.innerText = "⚠ Late Entry (Permission)"; 
+}
 
       if(data.in_time){
         btnIn.style.display = "none";
@@ -996,52 +1008,6 @@ location.reload();
 
 }
 
-
-function openPermissionPopup(){
-  document.getElementById("actionPopup").style.display = "none";
-  document.getElementById("permissionPopup").style.display = "flex";
-}
-
-function closePermissionPopup(){
-  document.getElementById("permissionPopup").style.display = "none";
-}
-
-function submitPermission(){
-
-  const reason = document.getElementById("permReason").value;
-  const remark = document.getElementById("permRemark").value;
-
-  if(!reason && !remark){
-    alert("Enter reason or remark");
-    return;
-  }
-
-  const todayKey = "attendance_done_" + new Date().toISOString().split("T")[0];
-  localStorage.setItem(todayKey, "done");   // ✅ ADD THIS
-
-  document.getElementById("permissionPopup").style.display = "none";
-
-  fetch("/mark-attendance",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({
-      employee_id:employeeId,
-      type:"PERMISSION",
-      lat:userLat,
-      lng:userLng,
-      remark: remark || reason
-    })
-  })
-  .then(res=>res.text())
-  .then(msg=>{
-    document.getElementById("successBox").innerText = msg;
-    document.getElementById("successBox").classList.remove("d-none");
-
-    setTimeout(()=>location.reload(),2000);
-  });
-
-}
-
 </script>
 
 <!-- ACTION POPUP -->
@@ -1068,7 +1034,7 @@ function submitPermission(){
         🔙 Lunch End
       </button>
 
-      <button id="btnPermission" class="btn btn-secondary popup-btn" onclick="openPermissionPopup()">
+      <button id="btnPermission" class="btn btn-secondary popup-btn" onclick="sendAttendance('PERMISSION')">
         ⏳ Afternoon Permission
       </button>
 
@@ -1081,37 +1047,6 @@ function submitPermission(){
     <!-- CANCEL BUTTON -->
     <button class="btn btn-light w-100 mt-3" onclick="closePopup()">
       ❌ Cancel
-    </button>
-
-  </div>
-
-</div>
-
-
-
-<!-- PERMISSION POPUP -->
-<div id="permissionPopup" class="popup-overlay">
-
-  <div class="popup-card">
-
-    <h5 class="mb-3 text-center">Permission Reason</h5>
-
-    <select id="permReason" class="form-control mb-2">
-      <option value="">Select Reason</option>
-      <option value="Personal Work">Personal Work</option>
-      <option value="Medical">Medical</option>
-      <option value="Emergency">Emergency</option>
-      <option value="Work from Home">Work from Home</option>
-    </select>
-
-    <input type="text" id="permRemark" class="form-control mb-3" placeholder="Enter remark">
-
-    <button class="btn btn-success w-100 mb-2" onclick="submitPermission()">
-      Submit
-    </button>
-
-    <button class="btn btn-light w-100" onclick="closePermissionPopup()">
-      Cancel
     </button>
 
   </div>

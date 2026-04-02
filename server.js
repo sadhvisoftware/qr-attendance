@@ -124,6 +124,8 @@ app.post("/mark-attendance",(req,res)=>{
 
 const {employee_id,type,remark} = req.body;
 
+const safeRemark = remark || "Afternoon Permission";
+
 const now = new Date();
 const ist = new Date(now.toLocaleString("en-US",{timeZone:"Asia/Kolkata"}));
 
@@ -659,6 +661,7 @@ app.get("/employee/status", (req, res) => {
         lunch_in: r.lunch_in,
         out_time: r.out_time,
         working_hours: r.working_hours,
+        permission_type: r.permission_type,
       });
     }
   );
