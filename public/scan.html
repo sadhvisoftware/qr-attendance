@@ -581,7 +581,9 @@ userLat=pos.coords.latitude;
 userLng=pos.coords.longitude;
 
 document.getElementById("locationStatus").innerHTML=
-"<span class='location-ok'>📍 Location Enabled</span>";
+`<span class='location-ok'>
+📍 Live Location (${pos.coords.accuracy.toFixed(0)}m)
+</span>`;
 
 },
 function(){
@@ -623,7 +625,7 @@ function refreshLocation(){
   }
 
   document.getElementById("locationStatus").innerHTML =
-  "<span class='text-warning'>🔄 Refreshing location...</span>";
+  "<span class='text-warning'>🔄 Fetching fresh location...</span>";
 
   navigator.geolocation.getCurrentPosition(
 
@@ -632,25 +634,27 @@ function refreshLocation(){
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
 
+      const accuracy = pos.coords.accuracy;
+
       document.getElementById("locationStatus").innerHTML =
-      "<span class='location-ok'>📍 Location Updated</span>";
+      `<span class='location-ok'>
+        📍 Updated (${accuracy.toFixed(0)}m accuracy)
+      </span>`;
 
     },
 
     function(err){
-
       document.getElementById("locationStatus").innerHTML =
-      "<span class='location-off'>❌ Unable to fetch location</span>";
-
+      "<span class='location-off'>❌ Location failed</span>";
     },
 
     {
-      enableHighAccuracy:true,
-      timeout:10000
+      enableHighAccuracy: true,   
+      maximumAge: 0,              
+      timeout: 15000              
     }
 
   );
-
 }
 
 function startScanner(){
@@ -862,7 +866,7 @@ const current = now.toTimeString().split(" ")[0];
   dayMsg.classList.remove("d-none");
 
   // hide all buttons
-  [btnIn, btnLunchOut, btnLunchIn, btnPermission, btnOut].forEach(b=>{
+  [btnIn, btnLunchOut, btnLunchIn, btnOut].forEach(b=>{
     if(b) b.style.display = "none";
   });
 
@@ -1026,8 +1030,7 @@ successBox.classList.remove("d-none");
 updateLastStatus(msg);
 
 setTimeout(()=>{
-loadStatus();
-controlOutButton();
+location.reload();
 },800);
 
 });
