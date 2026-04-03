@@ -991,49 +991,58 @@ async function controlOutButton(){
 }
 
 // Send Attendance Data to Server
-function sendAttendance(type){
+async function sendAttendance(type){
 
-   const todayKey = "attendance_done_" + new Date().toISOString().split("T")[0];
+  const todayKey = "attendance_done_" + new Date().toISOString().split("T")[0];
 
   if(type === "OUT"){
     localStorage.setItem(todayKey, "done");
   }
 
   // close popup
-document.getElementById("actionPopup").style.display="none";
+  document.getElementById("actionPopup").style.display="none";
 
-if(html5QrCode){
-  html5QrCode.stop().then(() => {
-    document.getElementById("reader").style.display = "none";
-    scannerStarted = false;
-  }).catch(err => console.log(err));
-}
+  // 🔥 STOP SCANNER FIRST (WAIT)
+  if(html5QrCode){
+    try{
+      await html5QrCode.stop();
+      document.getElementById("reader").style.display = "none";
+      scannerStarted = false;
+    }catch(err){
+      console.log("Scanner stop error", err);
+    }
+  }
 
-fetch("/mark-attendance",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-employee_id:employeeId,
-type:type,
-lat:userLat,
-lng:userLng
-})
-})
-.then(res=>res.text())
-.then(msg=>{
+  // 🔥 NOW CALL API
+  try{
 
-const successBox=document.getElementById("successBox");
+    const res = await fetch("/mark-attendance",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        employee_id:employeeId,
+        type:type,
+        lat:userLat,
+        lng:userLng
+      })
+    });
 
-successBox.innerText=msg;
-successBox.classList.remove("d-none");
+    const msg = await res.text();
 
-updateLastStatus(msg);
+    const successBox=document.getElementById("successBox");
+    successBox.innerText=msg;
+    successBox.classList.remove("d-none");
 
-setTimeout(()=>{
-window.location.href = window.location.pathname + "?t=" + Date.now();
-},500);
+    updateLastStatus(msg);
 
-});
+    // 🔥 FORCE HARD RELOAD (NO CACHE)
+    setTimeout(()=>{
+      window.location.href = window.location.pathname + "?t=" + Date.now();
+    },500);
+
+  }catch(err){
+    alert("Error: "+err);
+  }
 
 }
 
