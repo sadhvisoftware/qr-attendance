@@ -711,21 +711,22 @@ scannerStarted=true;
 }
 
 function updateLastStatus(msg) {
+
   const status = document.getElementById("lastStatus");
   const timeBox = document.getElementById("lastScanTime");
 
   if (msg.includes("IN Time Marked")) {
 
-  const now = new Date();
-  const current = now.toTimeString().split(" ")[0];
+    const now = new Date();
+    const current = now.toTimeString().split(" ")[0];
 
-  if(current > "10:45:00"){
-    status.innerHTML = "<span class='text-secondary'>PERMISSION IN TIME</span>";
-  } else {
-    status.innerHTML = "<span class='text-success'>IN TIME</span>";
+    if(current > "10:45:00"){
+      status.innerHTML = "<span class='text-secondary'>PERMISSION IN TIME</span>";
+    } else {
+      status.innerHTML = "<span class='text-success'>IN TIME</span>";
+    }
+
   }
-
-}
   else if (msg.includes("Lunch Start")) {
     status.innerHTML = "<span class='text-warning'>LUNCH START</span>";
   }
@@ -739,7 +740,8 @@ function updateLastStatus(msg) {
     status.innerText = msg;
   }
 
-  timeBox.innerText = "Last Scan Time: " + now;
+  const now = new Date(); 
+  timeBox.innerText = "Last Scan Time: " + now.toLocaleTimeString();
 }
 
 function format12hr(time){
