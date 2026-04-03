@@ -315,7 +315,9 @@ let permissionType = null;
 // 🔥 AUTO PERMISSION
 if(workingMin < requiredMin){
 
-  permissionTime = timeDiff(currentTime, "19:15:00");
+  const diffMin = requiredMin - workingMin;
+
+  permissionTime = toHHMM(diffMin > 0 ? diffMin : 0);
 
   status = "Permission";
   permissionType = "Permission";

@@ -991,7 +991,7 @@ function sendAttendance(type){
 
    const todayKey = "attendance_done_" + new Date().toISOString().split("T")[0];
 
-  if(type === "OUT" || type === "PERMISSION"){
+  if(type === "OUT"){
     localStorage.setItem(todayKey, "done");
   }
 
@@ -1027,7 +1027,8 @@ updateLastStatus(msg);
 
 setTimeout(()=>{
 loadStatus();
-},1000);
+controlOutButton();
+},800);
 
 });
 
