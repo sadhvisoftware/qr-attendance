@@ -550,13 +550,17 @@ const tr=`
 </td>
 
 <td>
-  <span class="badge bg-dark">
+  <span class="badge bg-primary">
     ${formatDuration(row.total_hours)}
   </span>
 </td>
 
 <td>
-  <span class="badge bg-dark">
+  <span class="badge ${
+    row.working_hours && row.working_hours < "08:00:00"
+      ? "bg-danger"
+      : "bg-success"
+  }">
     ${formatDuration(row.working_hours)}
   </span>
 </td>
