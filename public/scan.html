@@ -1030,8 +1030,8 @@ successBox.classList.remove("d-none");
 updateLastStatus(msg);
 
 setTimeout(()=>{
-location.reload();
-},800);
+window.location.href = window.location.pathname + "?t=" + Date.now();
+},500);
 
 });
 
