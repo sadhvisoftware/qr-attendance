@@ -18,8 +18,10 @@
 <style>
 
 body{
-background: linear-gradient(135deg,#eef2f7,#dfe9f3);
-font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg,#eef2f7,#dfe9f3);
+  font-family: 'Segoe UI', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
 }
 
 /* CONTAINER */
@@ -29,14 +31,18 @@ max-width:500px;
 
 /* MODERN CARD */
 .card-ui{
-background: rgba(255,255,255,0.9);
-backdrop-filter: blur(10px);
-border-radius:16px;
-padding:18px;
-box-shadow:0 8px 25px rgba(0,0,0,0.08);
-margin-bottom:18px;
-border:1px solid rgba(255,255,255,0.3);
-transition:0.3s;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: blur(12px);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  margin-bottom:18px;
+  border:1px solid rgba(255,255,255,0.4);
+  transition:0.25s ease;
+}
+
+.card-ui:active{
+  transform:scale(0.98);
 }
 
 
@@ -63,12 +69,17 @@ font-weight:600;
 
 /* BUTTON */
 .scan-btn{
-font-size:16px;
-padding:12px;
-border-radius:12px;
-background: linear-gradient(135deg,#0d6efd,#3b82f6);
-border:none;
-box-shadow:0 5px 15px rgba(13,110,253,0.3);
+  font-size:17px;
+  padding:14px;
+  border-radius:14px;
+  background: linear-gradient(135deg,#0d6efd,#3b82f6);
+  border:none;
+  box-shadow:0 8px 20px rgba(13,110,253,0.3);
+  transition:0.2s;
+}
+
+.scan-btn:active{
+  transform:scale(0.96);
 }
 
 
@@ -102,29 +113,63 @@ overflow:hidden;
 
 /* FLOATING BUTTON */
 .floating-scan-btn{
-position:fixed;
-bottom:20px;
-right:20px;
-width:65px;
-height:65px;
-border-radius:50%;
-background:linear-gradient(135deg,#0d6efd,#2563eb);
-color:white;
-border:none;
-font-size:28px;
-display:flex;
-align-items:center;
-justify-content:center;
-box-shadow:0 10px 25px rgba(0,0,0,0.3);
-z-index:999;
-transition:0.3s;
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  background:linear-gradient(135deg,#0d6efd,#2563eb);
+  color:white;
+  border:none;
+  font-size:30px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 12px 30px rgba(0,0,0,0.3);
+  z-index:999;
+  transition:0.2s;
 }
 
+.floating-scan-btn:active{
+  transform:scale(0.9);
+}
+
+/* POPUP */
+.popup-card{
+  background:white;
+  padding:20px;
+  border-radius:16px;
+  width:90%;
+  max-width:320px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.25);
+  animation: popupFade 0.25s ease;
+}
 
 
 /* MOBILE */
 @media(max-width:576px){
-.card-ui{ padding:15px; }
+
+  .container{
+    padding-left:10px;
+    padding-right:10px;
+  }
+
+  .card-ui{
+    padding:14px;
+  }
+
+  h5{
+    font-size:16px;
+  }
+
+  .status-text{
+    font-size:16px;
+  }
+
+  .table td{
+    font-size:13px;
+  }
 }
 
 /* SAFE SPACE */
@@ -133,12 +178,17 @@ body{ padding-bottom:90px; }
 
 /* ATTENDANCE CARDS */
 .att-card{
-background:#f8fafc;
-border-radius:12px;
-padding:12px;
-text-align:center;
-transition:0.3s;
-box-shadow:0 4px 10px rgba(0,0,0,0.05);
+  background:#f8fafc;
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
+  transition:0.25s;
+  box-shadow:0 5px 12px rgba(0,0,0,0.05);
+}
+
+.att-card div{
+  font-size:17px;
+  font-weight:600;
 }
 
 .att-card small{
@@ -151,6 +201,19 @@ margin-bottom:4px;
 .att-card div{
 font-size:16px;
 font-weight:600;
+}
+
+/* WORKING HOURS BOX */
+.working-box{
+  background:linear-gradient(135deg,#ecfdf5,#bbf7d0);
+  border-radius:14px;
+  padding:14px;
+  text-align:center;
+}
+
+.working-box div{
+  font-size:22px;
+  font-weight:700;
 }
 
 /* COLOR VARIANTS */
@@ -448,9 +511,9 @@ Enable GPS & Camera
 </div>
 
 <!-- FLOAT BUTTON -->
-<!-- <button class="floating-scan-btn" onclick="startScanner()">
+<button class="floating-scan-btn" onclick="startScanner()">
 📷
-</button> -->
+</button>
 
 <script>
 
